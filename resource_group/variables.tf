@@ -11,14 +11,15 @@ variable "subscription_id" {
   type        = string
 }
 
-variable "tags" {
-  description = "Etiquetas para resource group"
-  type        = map(string)
-  default     = {}
-}
 
 variable "tenant_id" {
   description = "ID del tenant de Azure Active Directory"
   type        = string
+}
+
+variable "tags" {
+  description = "Etiquetas para resource group"
+  type        = map(string)
+  default     = {}
 }
 

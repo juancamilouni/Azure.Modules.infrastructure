@@ -1,0 +1,156 @@
+name: CI Validación de módulos Terraform
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+  id-token: write  
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Instalar TFLint y tfsec
+        run: |
+          curl -L -o tflint.zip https://github.com/terraform-linters/tflint/releases/download/v0.57.0/tflint_linux_amd64.zip
+          unzip tflint.zip
+          sudo mv tflint /usr/local/bin/
+          curl -sSL https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64 -o tfsec
+          chmod +x tfsec
+          sudo mv tfsec /usr/local/bin/
+
+      - name: Detectar módulos modificados
+        id: modulos
+        run: |
+          BASE_SHA=""
+          HEAD_SHA=""
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            git fetch --depth=2 origin ${{ github.ref_name }} || true
+            BASE_SHA=$(git rev-parse HEAD^ 2>/dev/null || echo "")
+            HEAD_SHA=$(git rev-parse HEAD)
+          fi
+
+          echo "BASE_SHA=$BASE_SHA"
+          echo "HEAD_SHA=$HEAD_SHA"
+
+          if [ -z "$BASE_SHA" ]; then
+            echo "⚠️ No se pudo determinar el commit base. Ejecutando validación completa."
+            MODULOS=$(find . -maxdepth 1 -type d ! -name "." ! -name ".github" -exec basename {} \;)
+          else
+            set +e
+            DIFF_OUTPUT=$(git diff --name-only $BASE_SHA $HEAD_SHA 2>&1)
+            set -e
+            if [ $? -ne 0 ]; then
+              echo "❌ Error en git diff:"
+              echo "$DIFF_OUTPUT"
+              exit 1
+            fi
+            MODULOS=$(echo "$DIFF_OUTPUT" | cut -d/ -f1 | sort -u | grep -v '^\.github$')
+          fi
+
+          echo "Módulos detectados: $MODULOS"
+          echo "modulos=$MODULOS" >> $GITHUB_OUTPUT
+
+      - name: Validar cada módulo
+        if: steps.modulos.outputs.modulos != ''
+        run: |
+          set +e  # Controlar errores manualmente
+          error_ocurrido=0
+
+          for dir in ${{ steps.modulos.outputs.modulos }}; do
+            echo "🔍 Validando módulo: $dir"
+            cd "$dir"
+
+            echo "📦 Ejecutando terraform init..."
+            terraform_init_output=$(terraform init -backend=false 2>&1)
+            if [ $? -ne 0 ]; then
+              echo "❌ Error en 'terraform init' para el módulo '$dir':"
+              echo "$terraform_init_output"
+              error_ocurrido=1
+              cd -
+              continue
+            fi
+
+            echo "✅ Ejecutando terraform validate..."
+            terraform_validate_output=$(terraform validate 2>&1)
+            if [ $? -ne 0 ]; then
+              echo "❌ Error en 'terraform validate' para el módulo '$dir':"
+              echo "$terraform_validate_output"
+              error_ocurrido=1
+              cd -
+              continue
+            fi
+
+            echo "📄 Verificando formato con terraform fmt en módulo '$dir'..."
+            terraform_fmt_output=$(terraform fmt -check -recursive -diff 2>&1)
+            if [ $? -ne 0 ]; then
+              echo "❌ Se encontraron archivos sin formatear en el módulo '$dir':"
+              echo "$terraform_fmt_output"
+              echo "🛠️ Ejecuta localmente: terraform fmt -recursive"
+              error_ocurrido=1
+              cd -
+              continue
+            else
+              echo "✅ Todos los archivos .tf están correctamente formateados en '$dir'."
+            fi
+
+            echo "🔍 Ejecutando TFLint..."
+            echo "🔧 Inicializando reglas..."
+            tflint_init_output=$(tflint --init 2>&1)
+            if [ $? -ne 0 ]; then
+              echo "❌ Error al inicializar TFLint en el módulo '$dir':"
+              echo "$tflint_init_output"
+              error_ocurrido=1
+              cd -
+              continue
+            fi
+
+            tflint_output=$(tflint 2>&1)
+            if [ $? -ne 0 ]; then
+              echo "❌ TFLint encontró errores en el módulo '$dir':"
+              echo "$tflint_output"
+              error_ocurrido=1
+              cd -
+              continue
+            else
+              echo "✅ TFLint no reportó errores en '$dir'."
+            fi
+
+            echo "🔍 Ejecutando tfsec..."
+            tfsec_output=$(tfsec . 2>&1)
+            if [ $? -ne 0 ]; then
+              echo "❌ tfsec encontró vulnerabilidades en el módulo '$dir':"
+              echo "$tfsec_output"
+              error_ocurrido=1
+              cd -
+              continue
+            else
+              echo "✅ tfsec no reportó vulnerabilidades críticas en '$dir'."
+            fi
+
+            cd -
+          done
+
+          if [ $error_ocurrido -ne 0 ]; then
+            echo "❌ Validación fallida. Revisa los errores anteriores."
+            exit 1
+          else
+            echo "🎉 Todos los módulos pasaron la validación correctamente."
+          fi

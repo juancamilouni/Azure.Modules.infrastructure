@@ -1,0 +1,139 @@
+name: Crear tags  y lanzar deploy por módulo
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Ambiente al que deseas desplegar"
+        required: true
+        type: environment
+
+permissions:
+  id-token: write
+  contents: write
+  actions: write
+
+jobs:
+  tagging:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Configurar Git con GITHUB_TOKEN
+        run: |
+          git config user.name "github-actions"
+          git config user.email "ci@example.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
+          echo "🔍 Verificando autenticación remota..."
+          git ls-remote origin || { echo "❌ Token inválido o sin permisos"; exit 1; }
+
+      - name: Detectar módulos modificados
+        id: detectar
+        run: |
+          echo "ℹ️ Detectando cambios entre HEAD^ y HEAD en master..."
+          BASE_SHA=$(git rev-parse HEAD^ 2>/dev/null || echo "")
+          HEAD_SHA=$(git rev-parse HEAD)
+
+          if [ -z "$BASE_SHA" ]; then
+            echo "⚠️ No se pudo determinar el commit base. Se validan todos los módulos."
+            MODULOS=$(find . -maxdepth 1 -type d ! -name "." ! -name ".github" -exec basename {} \;)
+          else
+            MODULOS=$(git diff --name-only $BASE_SHA $HEAD_SHA | cut -d/ -f1 | grep -v '^\.github$' | sort -u)
+          fi
+
+          if [ -z "$MODULOS" ]; then
+            echo "❌ No se detectó ningún módulo modificado."
+            exit 1
+          fi
+
+          echo "Módulos detectados: $MODULOS"
+          MODULOS_COMAS=$(echo "$MODULOS" | paste -sd "," -)
+          echo "modulos=$MODULOS_COMAS" >> $GITHUB_OUTPUT
+
+      - name: Generar token de instalación de GitHub App
+        id: app_token
+        env:
+          APP_ID: "1325503"
+          INSTALLATION_ID: "68482749"
+          PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+        run: |
+          echo "Instalando dependencias necesarias..."
+          pip install PyJWT cryptography requests
+
+          echo "Generando JWT..."
+          echo "import jwt, time, os" > generate_jwt.py
+          echo "private_key = os.environ['PRIVATE_KEY'].encode('utf-8')" >> generate_jwt.py
+          echo "app_id = os.environ['APP_ID']" >> generate_jwt.py
+          echo "payload = {'iat': int(time.time()) - 60, 'exp': int(time.time()) + (10 * 60), 'iss': app_id}" >> generate_jwt.py
+          echo "token = jwt.encode(payload, private_key, algorithm='RS256')" >> generate_jwt.py
+          echo "print(token)" >> generate_jwt.py
+          JWT=$(python3 generate_jwt.py)
+
+          echo "Obteniendo token de instalación..."
+          TOKEN_RESPONSE=$(curl -s -X POST \
+            -H "Authorization: Bearer $JWT" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/app/installations/${INSTALLATION_ID}/access_tokens)
+
+          INSTALL_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r .token)
+
+          if [ "$INSTALL_TOKEN" = "null" ]; then
+            echo "❌ Error al obtener token de instalación."
+            echo "$TOKEN_RESPONSE"
+            exit 1
+          fi
+
+          echo "::add-mask::$INSTALL_TOKEN"
+          echo "token=$INSTALL_TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Crear y subir tags por módulo y notificar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          IFS=',' read -ra MODULOS <<< "${{ steps.detectar.outputs.modulos }}"
+          ENVIRONMENT="${{ inputs.environment }}"
+          INSTALL_TOKEN="${{ steps.app_token.outputs.token }}"
+
+          for MODULO in "${MODULOS[@]}"; do
+            VERSION="$MODULO-v0.0.${{ github.run_number }}"
+            echo "🏷️ Creando tag: $VERSION"
+            git tag "$VERSION"
+            git push origin "$VERSION"
+
+            echo "📦 Creando release para $VERSION..."
+            RELEASE_PAYLOAD=$(jq -n \
+              --arg tag "$VERSION" \
+              --arg name "Release $VERSION" \
+              --arg body "Release generado automáticamente para el módulo $MODULO" \
+              '{tag_name: $tag, name: $name, body: $body, draft: false, prerelease: false}'
+            )
+
+            curl -s -X POST \
+              -H "Authorization: token ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/${{ github.repository }}/releases \
+              -d "$RELEASE_PAYLOAD"
+
+            echo "🚀 Notificando a Terragrunt para desplegar $MODULO en $ENVIRONMENT..."
+            PAYLOAD=$(jq -n \
+              --arg module "$MODULO" \
+              --arg version "$VERSION" \
+              --arg environment "$ENVIRONMENT" \
+              '{event_type: "deploy-module", client_payload: {module: $module, version: $version, environment: $environment}}'
+            )
+
+            curl -s -X POST \
+              -H "Authorization: token ${INSTALL_TOKEN}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/ocrcsa/it_landing-zone-IaC-orchestrator/dispatches \
+              -d "$PAYLOAD"
+          done

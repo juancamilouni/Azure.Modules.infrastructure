@@ -61,8 +61,8 @@ jobs:
       - name: Generar token de instalación de GitHub App
         id: app_token
         env:
-          APP_ID: "1325503"
-          INSTALLATION_ID: "68482749"
+          APP_ID: "1854620"
+          INSTALLATION_ID: "83107821"
           PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
         run: |
           echo "Instalando dependencias necesarias..."

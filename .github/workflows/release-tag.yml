@@ -134,6 +134,6 @@ jobs:
             curl -s -X POST \
               -H "Authorization: token ${INSTALL_TOKEN}" \
               -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/repos/ocrcsa/it_landing-zone-IaC-orchestrator/dispatches \
+              https://github.com/juancamilouni/Azure.infrastructure.IaaS.git/dispatches \
               -d "$PAYLOAD"
           done

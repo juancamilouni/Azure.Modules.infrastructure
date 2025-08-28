@@ -13,12 +13,6 @@ variable "resource_group_name" {
   type        = string
 }
 
-variable "zones" {
-  description = "Zonas de disponibilidad (por ejemplo [\"1\", \"2\", \"3\"])"
-  type        = list(string)
-  default     = []
-}
-
 variable "tags" {
   description = "Etiquetas para la IP pública"
   type        = map(string)

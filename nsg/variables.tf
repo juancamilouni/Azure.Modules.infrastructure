@@ -34,7 +34,6 @@ variable "allowed_sql_cidr" {
   default     = "10.0.1.0/24"
 }
 
-#Despliegue de ambiente uat
 variable "tags" {
   description = "Etiquetas para los recursos"
   type        = map(string)
@@ -55,7 +54,6 @@ variable "subnet3_name" {
   type        = string
 }
 
-# Despliegue de ambiente prod
 variable "subnet4_name" {
   description = "Nombre de la subred 4"
   type        = string

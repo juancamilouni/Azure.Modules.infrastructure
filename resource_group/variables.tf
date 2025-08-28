@@ -6,6 +6,11 @@ variable "location" {
   type = string
 }
 
+variable "tags" {
+  description = "Etiquetas para resource group"
+  type        = map(string)
+  default     = {}
+}
 
 
 variable "subscription_id" {
@@ -19,8 +24,3 @@ variable "tenant_id" {
   type        = string
 }
 
-variable "tags" {
-  description = "Etiquetas para resource group"
-  type        = map(string)
-  default     = {}
-}

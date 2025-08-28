@@ -34,10 +34,6 @@ variable "allowed_sql_cidr" {
   default     = "10.0.1.0/24"
 }
 
-variable "tags" {
-  description = "Etiquetas para los recursos"
-  type        = map(string)
-}
 
 variable "subnet1_name" {
   description = "Nombre de la subred 1"
@@ -57,4 +53,9 @@ variable "subnet3_name" {
 variable "subnet4_name" {
   description = "Nombre de la subred 4"
   type        = string
+}
+
+variable "tags" {
+  description = "Etiquetas para los recursos"
+  type        = map(string)
 }

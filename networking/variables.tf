@@ -37,6 +37,13 @@ variable "subnets" {
     network_security_group_id = optional(string)
   }))
 }
+
+
+variable "tags" {
+  description = "Etiquetas aplicadas"
+  type        = map(string)
+}
+
 variable "enable_network_watcher" {
   description = "Indica si se debe crear un Network Watcher en la región"
   type        = bool
@@ -44,8 +51,4 @@ variable "enable_network_watcher" {
 }
 
 
-variable "tags" {
-  description = "Etiquetas aplicadas"
-  type        = map(string)
-}
 

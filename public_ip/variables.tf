@@ -19,13 +19,3 @@ variable "tags" {
   default     = {}
 }
 
-variable "subscription_id" {
-  description = "ID de la suscripción de Azure"
-  type        = string
-}
-
-
-variable "tenant_id" {
-  description = "ID del tenant de Azure Active Directory"
-  type        = string
-}

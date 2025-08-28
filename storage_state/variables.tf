@@ -15,12 +15,6 @@ variable "location" {
   type = string
 }
 
-variable "tags" {
-  description = "Etiqsesource group"
-  type        = map(string)
-  default     = {}
-}
-
 variable "storage_account_name" {
   type = string
 }
@@ -29,4 +23,11 @@ variable "storage_account_name" {
 variable "container_name" {
   description = "Nombre del contenedor de almacenamiento"
   type        = string
+}
+
+
+variable "tags" {
+  description = "Etiqsesource group"
+  type        = map(string)
+  default     = {}
 }

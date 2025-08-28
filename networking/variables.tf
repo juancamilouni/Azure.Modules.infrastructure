@@ -39,16 +39,14 @@ variable "subnets" {
 }
 
 
-variable "tags" {
-  description = "Etiquetas aplicadas"
-  type        = map(string)
-}
-
 variable "enable_network_watcher" {
   description = "Indica si se debe crear un Network Watcher en la región"
   type        = bool
   default     = false
 }
 
-
+variable "tags" {
+  description = "Etiquetas aplicadas"
+  type        = map(string)
+}
 

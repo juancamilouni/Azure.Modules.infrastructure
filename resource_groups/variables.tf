@@ -13,15 +13,13 @@ variable "location" {
   type        = string
 }
 
-variable "tags" {
-  description = "Etiquetas a aplicar a todos los Resource Groups."
-  type        = map(string)
-  default     = {}
-}
-
-
 variable "resource_group_names" {
   description = "Lista de nombres de Resource Groups a crear."
   type        = list(string)
 }
 
+variable "tags" {
+  description = "Etiquetas a aplicar a todos los Resource Groups."
+  type        = map(string)
+  default     = {}
+}

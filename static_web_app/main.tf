@@ -3,8 +3,8 @@ resource "azurerm_static_web_app" "swa" {
   resource_group_name = var.resource_group_name
   location            = var.location
 
-  sku_tier = var.sku_tier   # "Standard"
-  sku_size = var.sku_size   # "Standard"
+  sku_tier = var.sku_tier # "Standard"
+  sku_size = var.sku_size # "Standard"
 
   dynamic "identity" {
     for_each = var.identity_enabled ? [1] : []
@@ -24,5 +24,5 @@ resource "azurerm_static_web_app_custom_domain" "custom" {
 
   static_web_app_id = azurerm_static_web_app.swa.id
   domain_name       = each.value.domain
-  validation_type   = var.custom_domain_validation_type  # <- REQUERIDO
+  validation_type   = var.custom_domain_validation_type # <- REQUERIDO
 }

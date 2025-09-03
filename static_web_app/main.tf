@@ -49,6 +49,7 @@ resource "azurerm_static_site_custom_domain" "custom" {
   # validation_type = "cname-delegation"  # Alternativa: "dns-txt-token"
 }
 
+#Se realizara manual 
 ############################################################
 # 🧩 (Notas para PROD – no requieren cambios aquí)
 #

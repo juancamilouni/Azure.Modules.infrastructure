@@ -4,9 +4,9 @@ resource "azurerm_application_gateway" "agw" {
   resource_group_name = var.resource_group_name
 
   sku {
-    name     = "WAF_Medium"        # ✅ Calidad-precio: WAF v1 (más barato que WAF v2)
+    name     = "WAF_Medium" # ✅ Calidad-precio: WAF v1 (más barato que WAF v2)
     tier     = "WAF"
-    capacity = var.capacity        # Escalable: 2-5 instancias
+    capacity = var.capacity # Escalable: 2-5 instancias
   }
 
   gateway_ip_configuration {
@@ -55,16 +55,16 @@ resource "azurerm_application_gateway" "agw" {
   }
 
   waf_configuration {
-    enabled            = true
-    firewall_mode      = "Prevention"
-    rule_set_type      = "OWASP"
-    rule_set_version   = "3.2"
+    enabled          = true
+    firewall_mode    = "Prevention"
+    rule_set_type    = "OWASP"
+    rule_set_version = "3.2"
 
-   # 🔒 Recomendación: Habilitar en prod
-   # disabled_rule_group {
-   #  rule_group_name = "REQUEST-943-APPLICATION-ATTACK-SESSION-FIXATION"
-   #  rules           = ["943100"]  # Puedes comentar esta sección en prod
-   #}
+    # 🔒 Recomendación: Habilitar en prod
+    # disabled_rule_group {
+    #  rule_group_name = "REQUEST-943-APPLICATION-ATTACK-SESSION-FIXATION"
+    #  rules           = ["943100"]  # Puedes comentar esta sección en prod
+    #}
   }
 
   tags = var.tags

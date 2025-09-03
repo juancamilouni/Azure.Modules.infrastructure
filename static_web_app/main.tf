@@ -11,8 +11,8 @@ resource "azurerm_static_site" "swa" {
   resource_group_name = var.resource_group_name
 
   # 📦 SKU "calidad-precio"
-  sku_tier = var.sku_tier       # "Standard"
-  sku_size = var.sku_size       # "Standard"
+  sku_tier = var.sku_tier # "Standard"
+  sku_size = var.sku_size # "Standard"
 
   # 🔐 Identidad administrada (útil si luego necesitas permisos/Key Vault)
   dynamic "identity" {

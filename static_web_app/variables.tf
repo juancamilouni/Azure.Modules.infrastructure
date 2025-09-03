@@ -1,4 +1,3 @@
-# Provider
 variable "subscription_id" {
   description = "ID de la suscripción de Azure"
   type        = string
@@ -9,30 +8,29 @@ variable "tenant_id" {
   type        = string
 }
 
-# Recurso
 variable "name" {
-  description = "Nombre del Static Web App"
+  description = "Nombre de la Static Web App"
   type        = string
 }
 
 variable "resource_group_name" {
-  description = "Nombre del Resource Group destino"
+  description = "Resource Group donde se despliega la SWA"
   type        = string
 }
 
 variable "location" {
-  description = "Región del recurso"
+  description = "Región de Azure"
   type        = string
 }
 
 variable "sku_tier" {
-  description = "SKU Tier del Static Web App (Free | Standard)"
+  description = "Tier de la SWA (Standard)"
   type        = string
   default     = "Standard"
 }
 
 variable "sku_size" {
-  description = "SKU Size del Static Web App (Free | Standard)"
+  description = "Size de la SWA (Standard)"
   type        = string
   default     = "Standard"
 }
@@ -40,16 +38,17 @@ variable "sku_size" {
 variable "identity_enabled" {
   description = "Habilitar identidad administrada (SystemAssigned)"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "custom_domain" {
-  description = "Dominio personalizado (opcional, usar con azurerm_static_site_custom_domain)"
+  description = "Dominio personalizado (opcional). Déjalo null para no crear el recurso."
   type        = string
   default     = null
 }
 
 variable "tags" {
-  description = "Etiquetas para los recursos"
+  description = "Etiquetas"
   type        = map(string)
+  default     = {}
 }

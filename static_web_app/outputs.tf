@@ -9,6 +9,6 @@ output "swa_default_host" {
 }
 
 output "swa_principal_id" {
-  description = "Principal ID de la identidad administrada (si aplica)"
+  description = "Principal ID si la identidad administrada está habilitada"
   value       = try(azurerm_static_web_app.swa.identity[0].principal_id, null)
 }

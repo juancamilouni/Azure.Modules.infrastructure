@@ -3,7 +3,7 @@ variable "subscription_id" {
 ID de la suscripción de Azure donde se desplegará el recurso.
 Se inyecta desde Terragrunt (p. ej., common_vars.yaml / inputs).
 EOT
-  type = string
+  type        = string
 }
 
 variable "tenant_id" {
@@ -16,7 +16,7 @@ variable "name" {
 Nombre de la Static Web App. Debe ser único dentro de la suscripción.
 Sigue tu convención: <app>-swa-<env>.
 EOT
-  type = string
+  type        = string
 }
 
 variable "resource_group_name" {
@@ -29,7 +29,7 @@ variable "location" {
 Región administrativa del recurso (ej.: 'East US', 'West Europe').
 El portal mostrará 'Global' para SWA, pero aquí defines la región administrativa.
 EOT
-  type = string
+  type        = string
 }
 
 variable "sku_tier" {
@@ -70,8 +70,8 @@ variable "custom_domain" {
 Dominio personalizado a asociar (opcional). Ej.: 'app.midominio.com'.
 Dejar null o cadena vacía para omitir la creación del recurso.
 EOT
-  type    = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "custom_domain_validation_type" {
@@ -90,8 +90,8 @@ variable "connect_repo" {
 Si es true, se escriben repositoryUrl y branch en el recurso (visible en Deployment Center).
 Esto NO despliega el código; el despliegue se hace con pipeline usando el deployment token.
 EOT
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "repo_url" {
@@ -100,8 +100,8 @@ URL del repositorio (Azure DevOps o GitHub).
 Ej. Azure DevOps: https://dev.azure.com/ORG/PROY/_git/REPO
 Ej. GitHub:       https://github.com/ORG/REPO.git
 EOT
-  type    = string
-  default = ""
+  type        = string
+  default     = ""
 }
 
 variable "repo_branch" {

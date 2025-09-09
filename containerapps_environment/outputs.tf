@@ -4,6 +4,6 @@ output "container_app_id" {
 }
 
 output "container_app_fqdn" {
-  description = "FQDN público si el ingreso es externo"
-  value       = try(azurerm_container_app.app.latest_revision_fqdn, null)
+  description = "FQDN del ingress (si es externo) o null"
+  value       = try(azurerm_container_app.app.ingress[0].fqdn, null)
 }

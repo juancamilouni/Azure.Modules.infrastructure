@@ -1,6 +1,21 @@
+# Construimos la lista final de secretos, agregando el del ACR si viene por variables
+locals {
+  merged_secrets = concat(
+    var.secrets,
+    (
+      var.registry_password_value != null && var.registry_password_secret != null
+    ) ? [
+      {
+        name                = var.registry_password_secret
+        value               = var.registry_password_value
+        key_vault_secret_id = null
+      }
+    ] : []
+  )
+}
+
 resource "azurerm_container_app" "app" {
   name                         = var.name
-  location                     = var.location
   resource_group_name          = var.resource_group_name
   container_app_environment_id = var.environment_id
   revision_mode                = var.revision_mode
@@ -38,9 +53,9 @@ resource "azurerm_container_app" "app" {
     }
   }
 
-  # ---- Secretos: valores directos o referencias a Key Vault ----
+  # ---- Secretos (KeyVault o valor, + opcional password ACR) ----
   dynamic "secret" {
-    for_each = var.secrets
+    for_each = local.merged_secrets
     content {
       name                = secret.value.name
       value               = try(secret.value.value, null)
@@ -84,12 +99,4 @@ resource "azurerm_container_app" "app" {
       concurrent_requests = var.http_concurrency
     }
   }
-}
-
-# Si se pasó contraseña ACR, guardarla como secreto con el nombre indicado
-resource "azurerm_container_app_secret" "acr_password" {
-  count            = var.registry_password_value != null && var.registry_password_secret != null ? 1 : 0
-  name             = var.registry_password_secret
-  container_app_id = azurerm_container_app.app.id
-  value            = var.registry_password_value
 }

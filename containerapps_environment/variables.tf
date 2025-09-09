@@ -14,10 +14,7 @@ variable "resource_group_name" {
   type        = string
 }
 
-variable "location" {
-  description = "Región de Azure"
-  type        = string
-}
+# (NO location: ya no se configura en azurerm_container_app)
 
 # -------- App / Environment --------
 variable "name" {

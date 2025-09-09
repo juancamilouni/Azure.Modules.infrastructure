@@ -3,8 +3,8 @@ resource "azurerm_container_app_environment" "this" {
   location            = var.location
   resource_group_name = var.resource_group_name
 
-  # Observabilidad: solo ID de Log Analytics en esta versión del provider
-  log_analytics_workspace_id = var.log_analytics_workspace_id
+  # Sin Log Analytics (lo podrás agregar más adelante si lo decides)
+  # log_analytics_workspace_id = ...
 
   # Red (si es null => Environment público)
   infrastructure_subnet_id       = var.infrastructure_subnet_id

@@ -19,7 +19,7 @@ variable "name" {
 }
 
 variable "location" {
-  description = "Región de Azure (ej. East US, East US 2)"
+  description = "Región de Azure (ej. East US 2)"
   type        = string
 }
 
@@ -28,19 +28,14 @@ variable "resource_group_name" {
   type        = string
 }
 
-variable "log_analytics_workspace_id" {
-  description = "ID del Log Analytics Workspace (LAW) para logs y métricas"
-  type        = string
-}
-
 variable "infrastructure_subnet_id" {
-  description = "ID de la Subnet para un Environment privado (dejar null para Environment público)"
+  description = "ID de la Subnet para un Environment privado (null para público)"
   type        = string
   default     = null
 }
 
 variable "internal_load_balancer_enabled" {
-  description = "Habilitar el Load Balancer interno del servicio ACA (no crea un LB aparte). Déjalo en false si APIM será el front."
+  description = "Habilitar ILB interno del servicio ACA (déjalo en false si APIM es el front)"
   type        = bool
   default     = false
 }

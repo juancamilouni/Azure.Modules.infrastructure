@@ -16,7 +16,7 @@ resource "azurerm_static_web_app" "swa" {
   tags = var.tags
 }
 
-# (Opcional) Mostrar repo/branch en “Deployment Center” como metadata
+# Mostrar repo/branch en “Deployment Center” como metadata
 # Esto NO realiza despliegues; el despliegue se hace por pipeline con el token.
 resource "azapi_update_resource" "swa_repo" {
   count       = var.connect_repo ? 1 : 0

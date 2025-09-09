@@ -33,12 +33,6 @@ variable "log_analytics_workspace_id" {
   type        = string
 }
 
-variable "log_analytics_workspace_key" {
-  description = "Shared key del Log Analytics Workspace (LAW)"
-  type        = string
-  sensitive   = true
-}
-
 variable "infrastructure_subnet_id" {
   description = "ID de la Subnet para un Environment privado (dejar null para Environment público)"
   type        = string

@@ -9,7 +9,7 @@ resource "azurerm_key_vault" "kv" {
   purge_protection_enabled   = var.purge_protection_enabled
 
   # RBAC-first (no mezclar con access_policies)
-  enable_rbac_authorization     = var.rbac_authorization_enabled
+  enable_rbac_authorization = var.rbac_authorization_enabled
 
   # Público por ahora (cuando tengas PE ponlo en false)
   public_network_access_enabled = var.public_network_access_enabled

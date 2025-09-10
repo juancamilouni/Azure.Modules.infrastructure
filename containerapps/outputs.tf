@@ -9,6 +9,6 @@ output "container_app_fqdn" {
 }
 
 output "principal_id" {
-  description = "Principal ID de la identidad de la App."
+  description = "Principal ID de la identidad de la App (útil para RBAC posterior)."
   value       = try(azurerm_container_app.this.identity[0].principal_id, null)
 }

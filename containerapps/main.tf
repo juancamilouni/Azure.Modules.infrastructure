@@ -1,10 +1,21 @@
+########################################
+# Locals
+########################################
+locals {
+  # Convierte la lista de secretos en un mapa por nombre (necesario para for_each)
+  secrets_map = { for s in var.secrets : s.name => s }
+}
+
+########################################
+# Recurso principal
+########################################
 resource "azurerm_container_app" "this" {
   name                         = var.name
   resource_group_name          = var.resource_group_name
   container_app_environment_id = var.environment_id
   revision_mode                = var.revision_mode
 
-  # Identidad administrada (requerida para RBAC posterior, p. ej. AcrPull/KV)
+  # Identidad administrada (para RBAC posterior, p. ej. AcrPull/KV)
   dynamic "identity" {
     for_each = [1]
     content {
@@ -22,7 +33,7 @@ resource "azurerm_container_app" "this" {
       transport                  = var.ingress_transport
       allow_insecure_connections = var.allow_insecure_connections
 
-      # Requerido por el provider: siempre declaramos peso 100% a la última revisión
+      # Requerido: declarar peso 100% a la última revisión
       traffic_weight {
         percentage      = 100
         latest_revision = true
@@ -35,7 +46,7 @@ resource "azurerm_container_app" "this" {
 
   # Secretos (puede quedar vacío sin romper)
   dynamic "secret" {
-    for_each = var.secrets
+    for_each = local.secrets_map
     content {
       name                = secret.value.name
       value               = try(secret.value.value, null)

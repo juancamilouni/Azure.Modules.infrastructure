@@ -8,7 +8,7 @@ resource "azurerm_key_vault" "kv" {
   soft_delete_retention_days = 30
   purge_protection_enabled   = true
 
-  # ✅ Nombre correcto en azurerm 3.x
+  #  Nombre correcto en azurerm 3.x
   enable_rbac_authorization  = true
 
   # (Opcional y soportado en 3.x+)

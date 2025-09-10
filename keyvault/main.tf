@@ -5,12 +5,12 @@ resource "azurerm_key_vault" "kv" {
   tenant_id           = var.tenant_id
 
   # ← Usa las variables declaradas
-  sku_name                  = var.sku_name
+  sku_name                   = var.sku_name
   soft_delete_retention_days = var.soft_delete_retention_days
   purge_protection_enabled   = var.purge_protection_enabled
 
   # Nombre correcto del atributo en el provider azurerm 3.x
-  enable_rbac_authorization  = var.rbac_authorization_enabled
+  enable_rbac_authorization = var.rbac_authorization_enabled
 
   public_network_access_enabled = var.public_network_access_enabled
 

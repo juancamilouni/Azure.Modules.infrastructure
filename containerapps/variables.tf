@@ -1,6 +1,3 @@
-########################################
-# Contexto del provider
-########################################
 variable "subscription_id" {
   description = "Azure Subscription ID."
   type        = string
@@ -11,9 +8,6 @@ variable "tenant_id" {
   type        = string
 }
 
-########################################
-# Identificación y relaciones
-########################################
 variable "resource_group_name" {
   description = "Resource Group donde se crea la Container App."
   type        = string
@@ -29,9 +23,6 @@ variable "environment_id" {
   type        = string
 }
 
-########################################
-# Imagen / runtime del contenedor
-########################################
 variable "image" {
   description = "Imagen del contenedor (p. ej. acr.azurecr.io/repo:tag)."
   type        = string
@@ -70,9 +61,7 @@ variable "revision_mode" {
   }
 }
 
-########################################
-# Ingress (interno por defecto; APIM al frente)
-########################################
+
 variable "ingress_enabled" {
   description = "Habilita ingress en la Container App."
   type        = bool
@@ -108,9 +97,6 @@ variable "allow_insecure_connections" {
   default     = false
 }
 
-########################################
-# Variables de entorno / secretos (opcionales)
-########################################
 variable "env_vars" {
   description = "Variables de entorno en claro (clave → valor)."
   type        = map(string)
@@ -139,9 +125,7 @@ EOT
   sensitive = true
 }
 
-########################################
-# Registry (opcional; si usas MI + AcrPull, dejar null)
-########################################
+
 variable "registry" {
   description = "Configuración del registry si se requiere usuario/clave (evitar si usas MI + AcrPull)."
   type = object({
@@ -152,9 +136,7 @@ variable "registry" {
   default = null
 }
 
-########################################
-# Identidades
-########################################
+
 variable "identity_type" {
   description = "SystemAssigned | UserAssigned | SystemAssigned,UserAssigned."
   type        = string
@@ -172,9 +154,6 @@ variable "user_assigned_identity_ids" {
   default     = []
 }
 
-########################################
-# Escalado básico
-########################################
 variable "min_replicas" {
   description = "Cantidad mínima de réplicas."
   type        = number
@@ -187,18 +166,13 @@ variable "max_replicas" {
   default     = 3
 }
 
-########################################
-# (Opcional) Workload profile (ACA Env v2)
-########################################
+
 variable "workload_profile_name" {
   description = "Nombre del Workload Profile (si tu ACA Environment v2 lo requiere)."
   type        = string
   default     = null
 }
 
-########################################
-# Tags
-########################################
 variable "tags" {
   description = "Etiquetas del recurso (owner, project, environment, etc.)."
   type        = map(string)

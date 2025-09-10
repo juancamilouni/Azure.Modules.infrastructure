@@ -1,14 +1,8 @@
-########################################
-# Locals
-########################################
 locals {
   # Convierte la lista de secretos en un mapa por nombre (necesario para for_each)
   secrets_map = { for s in var.secrets : s.name => s }
 }
 
-########################################
-# Recurso principal
-########################################
 resource "azurerm_container_app" "this" {
   name                         = var.name
   resource_group_name          = var.resource_group_name

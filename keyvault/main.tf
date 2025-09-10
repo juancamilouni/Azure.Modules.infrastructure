@@ -3,23 +3,24 @@ resource "azurerm_key_vault" "kv" {
   location            = var.location
   resource_group_name = var.resource_group_name
   tenant_id           = var.tenant_id
-  sku_name            = var.sku_name
+  sku_name            = "standard"
 
-  soft_delete_retention_days = var.soft_delete_retention_days
-  purge_protection_enabled   = var.purge_protection_enabled
+  soft_delete_retention_days = 30
+  purge_protection_enabled   = true
 
-  # RBAC en lugar de access policies
-  rbac_authorization_enabled = var.rbac_authorization_enabled
+  # ✅ Nombre correcto en azurerm 3.x
+  enable_rbac_authorization  = true
 
-  # Red (ajústalo cuando metas Private Endpoint / reglas de firewall)
-  public_network_access_enabled = var.public_network_access_enabled
-  # Opcional: establecer firewall estricto
-  # network_acls {
-  #   bypass         = "AzureServices"
-  #   default_action = "Deny"
-  #   ip_rules       = []      # Lista de IPs si necesitas
-  #   virtual_network_subnet_ids = [] # No útil con PE; para PE crea el recurso Private Endpoint
-  # }
+  # (Opcional y soportado en 3.x+)
+  public_network_access_enabled = true
+
+  # 🔕 Quita los access_policy si usas RBAC
+  # access_policy { ... }  # <-- eliminar
 
   tags = var.tags
+
+  # (Opcional) algunos habilitan esto porque Azure a veces “toca” el flag:
+  # lifecycle {
+  #   ignore_changes = [ enable_rbac_authorization ]
+  # }
 }

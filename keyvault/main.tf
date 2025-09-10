@@ -9,7 +9,7 @@ resource "azurerm_key_vault" "kv" {
   purge_protection_enabled   = true
 
   #  Nombre correcto en azurerm 3.x
-  enable_rbac_authorization  = true
+  enable_rbac_authorization = true
 
   # (Opcional y soportado en 3.x+)
   public_network_access_enabled = true

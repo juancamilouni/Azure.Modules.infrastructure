@@ -1,15 +1,10 @@
-locals {
-  # Convierte la lista de secretos en un mapa por nombre (necesario para for_each)
-  secrets_map = { for s in var.secrets : s.name => s }
-}
-
 resource "azurerm_container_app" "this" {
   name                         = var.name
   resource_group_name          = var.resource_group_name
   container_app_environment_id = var.environment_id
   revision_mode                = var.revision_mode
 
-  # Identidad administrada (para RBAC posterior, p. ej. AcrPull/KV)
+  # Identidad administrada (para RBAC posterior: AcrPull/KV)
   dynamic "identity" {
     for_each = [1]
     content {
@@ -27,7 +22,7 @@ resource "azurerm_container_app" "this" {
       transport                  = var.ingress_transport
       allow_insecure_connections = var.allow_insecure_connections
 
-      # Requerido: declarar peso 100% a la última revisión
+      # Requerido por el provider: peso 100% a la última revisión
       traffic_weight {
         percentage      = 100
         latest_revision = true
@@ -38,9 +33,9 @@ resource "azurerm_container_app" "this" {
   # (Opcional) Workload profile (ACA Env v2)
   workload_profile_name = var.workload_profile_name
 
-  # Secretos (puede quedar vacío sin romper)
+  # Secretos (puede quedar vacío sin romper) — FIX con tomap()
   dynamic "secret" {
-    for_each = local.secrets_map
+    for_each = tomap({ for s in var.secrets : s.name => s })
     content {
       name                = secret.value.name
       value               = try(secret.value.value, null)
@@ -49,7 +44,7 @@ resource "azurerm_container_app" "this" {
     }
   }
 
-  # Registry opcional: si usas MI + AcrPull, deja var.registry = null
+  # Registry opcional: si usas MI + AcrPull, dejar var.registry = null
   dynamic "registry" {
     for_each = var.registry == null ? [] : [var.registry]
     content {

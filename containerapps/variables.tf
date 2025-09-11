@@ -130,10 +130,10 @@ Secretos de la Container App. Opcionales.
 - Si luego agregas Key Vault: usa key_vault_secret_id y 'identity'='system' o client_id de UAMI.
 EOT
   type = list(object({
-    name                : string
-    value               : optional(string)
+    name : string
+    value : optional(string)
     key_vault_secret_id : optional(string)
-    identity            : optional(string) # 'system' o client_id de UAMI
+    identity : optional(string) # 'system' o client_id de UAMI
   }))
   default   = []
   sensitive = true

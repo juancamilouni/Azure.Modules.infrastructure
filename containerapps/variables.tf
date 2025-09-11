@@ -16,7 +16,7 @@ variable "resource_group_name" {
 
 # -------------------- App / Environment --------------------
 variable "name" {
-  description = "Nombre de la Azure Container App"
+  description = "Nombre de la Azure Container App (minúsculas, <=32, sin '--')"
   type        = string
 }
 
@@ -70,9 +70,9 @@ variable "ingress_transport" {
 
 # -------------------- Revisiones / Escalado --------------------
 variable "revision_mode" {
-  description = "Modo de revisión: single | multiple"
+  description = "Modo de revisión: Single | Multiple"
   type        = string
-  default     = "single"
+  default     = "Single"
 }
 
 variable "min_replicas" {

@@ -21,8 +21,11 @@ resource "azurerm_container_app" "this" {
   name                         = var.name
   resource_group_name          = var.resource_group_name
   container_app_environment_id = var.environment_id
-  revision_mode                = var.revision_mode
-  tags                         = var.tags
+
+  # Normaliza a "Single" / "Multiple" por si llega "single" / "multiple"
+  revision_mode = title(var.revision_mode)
+
+  tags = var.tags
 
   # -------------------- Identidad --------------------
   identity {

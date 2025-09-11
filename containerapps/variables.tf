@@ -1,206 +1,157 @@
-########################################
-# Contexto del provider
-########################################
+# -------------------- Contexto --------------------
 variable "subscription_id" {
-  description = "Azure Subscription ID."
+  description = "ID de la suscripción"
   type        = string
 }
 
 variable "tenant_id" {
-  description = "Azure Tenant ID."
+  description = "ID del tenant"
   type        = string
 }
 
-########################################
-# Identificación y relaciones
-########################################
 variable "resource_group_name" {
-  description = "Resource Group donde se crea la Container App."
+  description = "Nombre del Resource Group de destino"
   type        = string
 }
 
+# -------------------- App / Environment --------------------
 variable "name" {
-  description = "Nombre del recurso (kebab-case: project-componente-environment)."
+  description = "Nombre de la Azure Container App"
   type        = string
 }
 
 variable "environment_id" {
-  description = "ID del Azure Container Apps Environment."
+  description = "ID del Azure Container Apps Environment"
   type        = string
 }
 
-########################################
-# Imagen / runtime del contenedor
-########################################
+variable "tags" {
+  description = "Etiquetas"
+  type        = map(string)
+  default     = {}
+}
+
+# -------------------- Imagen / Runtime --------------------
 variable "image" {
-  description = "Imagen del contenedor (p. ej. acr.azurecr.io/repo:tag)."
+  description = "Imagen (por ejemplo: acr.azurecr.io/servicio:tag)"
   type        = string
 }
 
-variable "cpu" {
-  description = "vCPU del contenedor (p. ej. 0.25, 0.5, 1, 2, 4)."
+variable "container_cpu" {
+  description = "vCPU para el contenedor (0.25, 0.5, 1, ...)"
   type        = number
   default     = 0.5
-
-  validation {
-    condition     = contains([0.25, 0.5, 1, 2, 4], var.cpu)
-    error_message = "cpu debe ser uno de: 0.25, 0.5, 1, 2, 4."
-  }
 }
 
-variable "memory" {
-  description = "Memoria del contenedor (formato: 0.5Gi, 1.0Gi, 2.0Gi...)."
+variable "container_memory" {
+  description = "Memoria (Gi), por ejemplo: 1Gi, 2Gi"
   type        = string
-  default     = "1.0Gi"
-
-  validation {
-    condition     = can(regex("^([0-9]+(\\.[0-9]+)?)Gi$", var.memory))
-    error_message = "memory debe estar en formato '<n>Gi', por ejemplo '1.0Gi'."
-  }
+  default     = "1Gi"
 }
 
-variable "revision_mode" {
-  description = "Modo de revisiones: Single o Multiple."
-  type        = string
-  default     = "Single"
-
-  validation {
-    condition     = contains(["Single", "Multiple"], var.revision_mode)
-    error_message = "revision_mode debe ser 'Single' o 'Multiple'."
-  }
-}
-
-########################################
-# Ingress (interno por defecto; APIM al frente)
-########################################
-variable "ingress_enabled" {
-  description = "Habilita ingress en la Container App."
-  type        = bool
-  default     = true
+# -------------------- Ingress --------------------
+variable "target_port" {
+  description = "Puerto del contenedor a exponer"
+  type        = number
+  default     = 8080
 }
 
 variable "ingress_external" {
-  description = "Si true, ingress externo; false = interno."
+  description = "Exponer externamente (true) o solo interno (false)"
   type        = bool
   default     = false
-}
-
-variable "target_port" {
-  description = "Puerto de escucha de la aplicación."
-  type        = number
-  default     = 80
 }
 
 variable "ingress_transport" {
-  description = "Transporte de ingress: auto | http | http2."
+  description = "Transporte del ingress: auto | http | http2"
   type        = string
   default     = "auto"
-
-  validation {
-    condition     = contains(["auto", "http", "http2"], var.ingress_transport)
-    error_message = "ingress_transport debe ser 'auto', 'http' o 'http2'."
-  }
 }
 
-variable "allow_insecure_connections" {
-  description = "Permite HTTP sin TLS (solo si es necesario)."
-  type        = bool
-  default     = false
-}
-
-########################################
-# Variables de entorno / secretos (opcionales)
-########################################
-variable "env_vars" {
-  description = "Variables de entorno en claro (clave → valor)."
-  type        = map(string)
-  default     = {}
-}
-
-variable "secret_env_map" {
-  description = "ENV_NAME → secret_name (de var.secrets). Puede quedar vacío."
-  type        = map(string)
-  default     = {}
-}
-
-variable "secrets" {
-  description = <<EOT
-Secretos de la Container App (opcionales).
-- Si NO tienes Key Vault aún, deja esta lista vacía (default).
-- Si luego agregas Key Vault: usa key_vault_secret_id y 'identity'='system' o client_id de UAMI.
-EOT
-  type = list(object({
-    name                = string
-    value               = optional(string)
-    key_vault_secret_id = optional(string)
-    identity            = optional(string) # 'system' o client_id de UAMI
-  }))
-  default   = []
-  sensitive = true
-}
-
-########################################
-# Registry (opcional; si usas MI + AcrPull, dejar null)
-########################################
-variable "registry" {
-  description = "Config del registry si se requiere usuario/clave (evitar si usas MI + AcrPull)."
-  type = object({
-    server               = string
-    username             = optional(string)
-    password_secret_name = optional(string)
-  })
-  default = null
-}
-
-########################################
-# Identidades
-########################################
-variable "identity_type" {
-  description = "SystemAssigned | UserAssigned | SystemAssigned,UserAssigned."
+# -------------------- Revisiones / Escalado --------------------
+variable "revision_mode" {
+  description = "Modo de revisión: single | multiple"
   type        = string
-  default     = "SystemAssigned"
-
-  validation {
-    condition     = contains(["SystemAssigned", "UserAssigned", "SystemAssigned,UserAssigned"], var.identity_type)
-    error_message = "identity_type inválido. Usa SystemAssigned, UserAssigned o SystemAssigned,UserAssigned."
-  }
+  default     = "single"
 }
 
-variable "user_assigned_identity_ids" {
-  description = "IDs de identidades de usuario (si aplica)."
-  type        = list(string)
-  default     = []
-}
-
-########################################
-# Escalado básico
-########################################
 variable "min_replicas" {
-  description = "Cantidad mínima de réplicas."
+  description = "Réplicas mínimas"
   type        = number
   default     = 1
 }
 
 variable "max_replicas" {
-  description = "Cantidad máxima de réplicas."
+  description = "Réplicas máximas"
   type        = number
   default     = 3
 }
 
-########################################
-# (Opcional) Workload profile (ACA Env v2)
-########################################
-variable "workload_profile_name" {
-  description = "Nombre del Workload Profile (si tu ACA Environment v2 lo requiere)."
+variable "http_concurrency" {
+  description = "Requests concurrentes por réplica para regla HTTP"
+  type        = number
+  default     = 60
+}
+
+# -------------------- Env vars --------------------
+variable "env_vars" {
+  description = "Variables de entorno no secretas"
+  type        = map(string)
+  default     = {}
+}
+
+variable "secret_env_map" {
+  description = "Mapa ENV_NAME -> secret_name definidos en 'secrets'"
+  type        = map(string)
+  default     = {}
+}
+
+# -------------------- Secretos --------------------
+variable "secrets" {
+  description = "Secretos (inline o referenciados por Key Vault)"
+  type = list(object({
+    name                = string
+    value               = optional(string)
+    key_vault_secret_id = optional(string)
+  }))
+  default = []
+}
+
+# -------------------- Registro (solo si NO usas MI + AcrPull) --------------------
+variable "registry_server" {
+  description = "Servidor del ACR (opcional si usas AcrPull via MI)"
   type        = string
   default     = null
 }
 
-########################################
-# Tags
-########################################
-variable "tags" {
-  description = "Etiquetas del recurso (owner, project, environment, etc.)."
-  type        = map(string)
-  default     = {}
+variable "registry_username" {
+  description = "Usuario del ACR (opcional)"
+  type        = string
+  default     = null
+}
+
+variable "registry_password_secret" {
+  description = "Nombre del secreto para guardar el password del ACR (opcional)"
+  type        = string
+  default     = null
+}
+
+variable "registry_password_value" {
+  description = "Password del ACR (opcional, sensible)"
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
+# -------------------- Identidad --------------------
+variable "system_identity" {
+  description = "Habilitar System Assigned Managed Identity"
+  type        = bool
+  default     = true
+}
+
+variable "user_assigned_identity_ids" {
+  description = "Lista de IDs de identidades administradas por el usuario (opcional)"
+  type        = list(string)
+  default     = []
 }

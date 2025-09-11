@@ -1,11 +1,20 @@
-########################################
-# Locals: índice por nombre para secretos
-########################################
 locals {
-  # Mapa nombre → objeto secreto (si var.secrets=[], queda {})
-  secrets_by_name = { for s in var.secrets : s.name => s }
-  # Conjunto de nombres (set(string)) — estable para for_each
-  secret_names = toset(keys(local.secrets_by_name))
+  # Agrega (si corresponde) el password del ACR como secreto interno
+  merged_secrets = concat(
+    var.secrets,
+    (
+      var.registry_password_value != null && var.registry_password_secret != null
+    ) ? [{
+      name                = var.registry_password_secret
+      value               = var.registry_password_value
+      key_vault_secret_id = null
+    }] : []
+  )
+
+  # Mapa estable para iterar en dynamic "secret"
+  secrets_by_name = {
+    for s in local.merged_secrets : s.name => s
+  }
 }
 
 resource "azurerm_container_app" "this" {
@@ -13,68 +22,62 @@ resource "azurerm_container_app" "this" {
   resource_group_name          = var.resource_group_name
   container_app_environment_id = var.environment_id
   revision_mode                = var.revision_mode
+  tags                         = var.tags
 
-  # Identidad administrada
-  dynamic "identity" {
-    for_each = [1]
-    content {
-      type         = var.identity_type
-      identity_ids = contains(["UserAssigned", "SystemAssigned,UserAssigned"], var.identity_type) ? var.user_assigned_identity_ids : null
+  # -------------------- Identidad --------------------
+  identity {
+    type = (
+      var.system_identity && length(var.user_assigned_identity_ids) > 0 ? "SystemAssigned, UserAssigned" :
+      var.system_identity ? "SystemAssigned" :
+      length(var.user_assigned_identity_ids) > 0 ? "UserAssigned" : "None"
+    )
+    identity_ids = var.user_assigned_identity_ids
+  }
+
+  # -------------------- Ingress --------------------
+  ingress {
+    external_enabled = var.ingress_external
+    target_port      = var.target_port
+    transport        = var.ingress_transport
+
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
     }
   }
 
-  # Ingress
-  dynamic "ingress" {
-    for_each = var.ingress_enabled ? [1] : []
-    content {
-      external_enabled           = var.ingress_external
-      target_port                = var.target_port
-      transport                  = var.ingress_transport
-      allow_insecure_connections = var.allow_insecure_connections
-
-      traffic_weight {
-        percentage      = 100
-        latest_revision = true
-      }
-    }
-  }
-
-  # (Opcional) Workload profile (ACA Env v2)
-  workload_profile_name = var.workload_profile_name
-
-  # Secretos — for_each con set(string) + lookup en mapa
-  dynamic "secret" {
-    for_each = local.secret_names
-    content {
-      name                = secret.value
-      value               = try(local.secrets_by_name[secret.value].value, null)
-      key_vault_secret_id = try(local.secrets_by_name[secret.value].key_vault_secret_id, null)
-      identity            = try(local.secrets_by_name[secret.value].identity, null) # 'system' o client_id de UAMI
-    }
-  }
-
-  # Registry opcional
+  # -------------------- Registro (solo si NO usas MI + AcrPull) --------------------
   dynamic "registry" {
-    for_each = var.registry == null ? [] : [var.registry]
+    for_each = var.registry_server == null ? [] : [1]
     content {
-      server               = registry.value.server
-      username             = try(registry.value.username, null)
-      password_secret_name = try(registry.value.password_secret_name, null)
+      server               = var.registry_server
+      username             = var.registry_username
+      password_secret_name = var.registry_password_secret
     }
   }
 
+  # -------------------- Secretos (inline o Key Vault) --------------------
+  dynamic "secret" {
+    for_each = local.secrets_by_name
+    content {
+      name                = each.value.name
+      value               = try(each.value.value, null)
+      key_vault_secret_id = try(each.value.key_vault_secret_id, null)
+    }
+  }
+
+  # -------------------- Plantilla / Contenedor --------------------
   template {
-    # En azurerm ~> 3.104, min/max_replicas van aquí
     min_replicas = var.min_replicas
     max_replicas = var.max_replicas
 
     container {
-      name   = var.name
+      name   = "app"
       image  = var.image
-      cpu    = var.cpu
-      memory = var.memory
+      cpu    = var.container_cpu
+      memory = var.container_memory
 
-      # Env en claro
+      # Env no secretas
       dynamic "env" {
         for_each = var.env_vars
         content {
@@ -83,7 +86,7 @@ resource "azurerm_container_app" "this" {
         }
       }
 
-      # Env desde secretos (ENV_NAME → secret_name)
+      # Env secretas (ENV_NAME -> secret_name)
       dynamic "env" {
         for_each = var.secret_env_map
         content {
@@ -92,7 +95,11 @@ resource "azurerm_container_app" "this" {
         }
       }
     }
-  }
 
-  tags = var.tags
+    # Regla de escalado HTTP básica
+    http_scale_rule {
+      name                = "http-concurrency"
+      concurrent_requests = var.http_concurrency
+    }
+  }
 }

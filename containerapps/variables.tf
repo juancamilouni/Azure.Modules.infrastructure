@@ -118,22 +118,22 @@ variable "env_vars" {
 }
 
 variable "secret_env_map" {
-  description = "ENV_NAME → secret_name (de var.secrets). Si no hay secretos, puede quedar vacío."
+  description = "ENV_NAME → secret_name (de var.secrets). Puede quedar vacío."
   type        = map(string)
   default     = {}
 }
 
 variable "secrets" {
   description = <<EOT
-Secretos de la Container App. Opcionales.
+Secretos de la Container App (opcionales).
 - Si NO tienes Key Vault aún, deja esta lista vacía (default).
 - Si luego agregas Key Vault: usa key_vault_secret_id y 'identity'='system' o client_id de UAMI.
 EOT
   type = list(object({
-    name : string
-    value : optional(string)
-    key_vault_secret_id : optional(string)
-    identity : optional(string) # 'system' o client_id de UAMI
+    name                = string
+    value               = optional(string)
+    key_vault_secret_id = optional(string)
+    identity            = optional(string) # 'system' o client_id de UAMI
   }))
   default   = []
   sensitive = true
@@ -143,7 +143,7 @@ EOT
 # Registry (opcional; si usas MI + AcrPull, dejar null)
 ########################################
 variable "registry" {
-  description = "Configuración del registry si se requiere usuario/clave (evitar si usas MI + AcrPull)."
+  description = "Config del registry si se requiere usuario/clave (evitar si usas MI + AcrPull)."
   type = object({
     server               = string
     username             = optional(string)
@@ -196,6 +196,9 @@ variable "workload_profile_name" {
   default     = null
 }
 
+########################################
+# Tags
+########################################
 variable "tags" {
   description = "Etiquetas del recurso (owner, project, environment, etc.)."
   type        = map(string)

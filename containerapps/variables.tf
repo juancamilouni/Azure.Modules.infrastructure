@@ -196,9 +196,6 @@ variable "workload_profile_name" {
   default     = null
 }
 
-########################################
-# Tags
-########################################
 variable "tags" {
   description = "Etiquetas del recurso (owner, project, environment, etc.)."
   type        = map(string)

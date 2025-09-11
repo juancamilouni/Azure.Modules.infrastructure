@@ -1,7 +1,7 @@
 variable "subscription_id" {
   description = <<EOT
 ID de la suscripción de Azure donde se desplegará el recurso.
-Se inyecta desde Terragrunt (p. ej., common_vars.yaml / inputs).
+Se inyecta desde Terragrunt.
 EOT
   type        = string
 }

@@ -27,15 +27,20 @@ resource "azurerm_container_app" "this" {
 
   tags = var.tags
 
+
   # -------------------- Identidad --------------------
-  identity {
-    type = (
-      var.system_identity && length(var.user_assigned_identity_ids) > 0 ? "SystemAssigned, UserAssigned" :
-      var.system_identity ? "SystemAssigned" :
-      length(var.user_assigned_identity_ids) > 0 ? "UserAssigned" : "None"
-    )
-    identity_ids = var.user_assigned_identity_ids
+  dynamic "identity" {
+    for_each = (var.system_identity || length(var.user_assigned_identity_ids) > 0) ? [1] : []
+    content {
+      type = (
+        var.system_identity && length(var.user_assigned_identity_ids) > 0 ? "SystemAssigned, UserAssigned" :
+        var.system_identity ? "SystemAssigned" :
+        "UserAssigned"
+      )
+      identity_ids = var.user_assigned_identity_ids
+    }
   }
+
 
   # -------------------- Ingress --------------------
   ingress {

@@ -49,13 +49,21 @@ resource "azurerm_container_app" "this" {
     }
   }
 
-  # -------------------- Registro (solo si NO usas MI + AcrPull) --------------------
+  # -------------------- Registro (ACR con UAMI o con credenciales) --------------------
   dynamic "registry" {
     for_each = var.registry_server == null ? [] : [1]
     content {
       server               = var.registry_server
       username             = var.registry_username
       password_secret_name = var.registry_password_secret
+
+      # Si usas UAMI (AcrPull), indica explícitamente la identidad.
+      # El proveedor ignora null, así que no hay problema si no aplica.
+      identity = (
+        length(var.user_assigned_identity_ids) > 0 && var.registry_username == null
+        ? var.user_assigned_identity_ids[0]
+        : null
+      )
     }
   }
 
@@ -63,9 +71,9 @@ resource "azurerm_container_app" "this" {
   dynamic "secret" {
     for_each = local.secrets_by_name
     content {
-      name                = each.value.name
-      value               = try(each.value.value, null)
-      key_vault_secret_id = try(each.value.key_vault_secret_id, null)
+      name                = secret.value.name
+      value               = try(secret.value.value, null)
+      key_vault_secret_id = try(secret.value.key_vault_secret_id, null)
     }
   }
 

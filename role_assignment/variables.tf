@@ -22,6 +22,3 @@ variable "principal_id" {
   description = "Object ID (principal) de la identidad"
   type        = string
 }
-
-
-#deploydev

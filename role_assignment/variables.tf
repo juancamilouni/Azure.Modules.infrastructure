@@ -14,7 +14,7 @@ variable "scope" {
 }
 
 variable "role_definition_id" {
-  description = "ID ARM del rol en la suscripción"
+  description = "ID ARM del rol en la suscripción (ej: AcrPull GUID global)"
   type        = string
 }
 
@@ -22,5 +22,3 @@ variable "principal_id" {
   description = "Object ID (principal) de la identidad"
   type        = string
 }
-
-#deploydev

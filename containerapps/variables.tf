@@ -117,7 +117,6 @@ variable "secrets" {
   default = []
 }
 
-# -------------------- Registro (solo si NO usas MI + AcrPull) --------------------
 variable "registry_server" {
   description = "Servidor del ACR (opcional si usas AcrPull via MI)"
   type        = string

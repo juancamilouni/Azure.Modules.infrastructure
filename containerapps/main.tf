@@ -4,10 +4,10 @@ locals {
     var.secrets,
     (
       var.registry_password_value != null && var.registry_password_secret != null
-      ) ? [{
-        name                = var.registry_password_secret
-        value               = var.registry_password_value
-        key_vault_secret_id = null
+    ) ? [{
+      name                = var.registry_password_secret
+      value               = var.registry_password_value
+      key_vault_secret_id = null
     }] : []
   )
 

@@ -68,7 +68,6 @@ resource "azurerm_api_management_subscription" "sub" {
   api_management_name = azurerm_api_management.this.name
   resource_group_name = var.resource_group_name
 
-  name         = var.subscription_name
   display_name = var.subscription_display_name
   product_id   = local.product_id_full
   user_id      = var.subscription_user_id

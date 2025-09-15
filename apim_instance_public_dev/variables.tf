@@ -121,11 +121,6 @@ variable "create_subscription" {
   default     = true
 }
 
-variable "subscription_name" {
-  description = "Nombre único de la suscripción a crear"
-  type        = string
-  default     = "dev-subscription"
-}
 
 variable "subscription_display_name" {
   description = "Nombre visible de la suscripción"

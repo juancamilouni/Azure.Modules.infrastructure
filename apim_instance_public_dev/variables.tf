@@ -31,7 +31,7 @@ variable "sku_name" {
   description = "SKU de APIM (Developer | Standard)"
   type        = string
   validation {
-    condition     = contains(["Developer","Standard"], var.sku_name)
+    condition     = contains(["Developer", "Standard"], var.sku_name)
     error_message = "Solo se permite Developer o Standard para DEV."
   }
 }

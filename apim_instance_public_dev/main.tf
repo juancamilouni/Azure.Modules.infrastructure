@@ -1,3 +1,19 @@
+locals {
+  sku_map = {
+    "Developer"     = "Developer_1"
+    "Developer_1"   = "Developer_1"
+    "Standard"      = "Standard_1"
+    "Standard_1"    = "Standard_1"
+    "Basic"         = "Basic_1"
+    "Basic_1"       = "Basic_1"
+    "Premium"       = "Premium_1"
+    "Premium_1"     = "Premium_1"
+    "Consumption"   = "Consumption_0"
+    "Consumption_0" = "Consumption_0"
+  }
+  sku_normalized = lookup(local.sku_map, var.sku_name, var.sku_name)
+}
+
 resource "azurerm_api_management" "this" {
   name                = var.apim_name
   location            = var.location
@@ -5,7 +21,7 @@ resource "azurerm_api_management" "this" {
 
   publisher_name  = var.publisher_name
   publisher_email = var.publisher_email
-  sku_name        = var.sku_name # Developer (dev/uat) | Standard (prod sin VNet)
+  sku_name        = local.sku_normalized
 
   identity { type = "SystemAssigned" }
 

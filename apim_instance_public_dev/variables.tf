@@ -28,11 +28,17 @@ variable "resource_group_name" {
 }
 
 variable "sku_name" {
-  description = "SKU de APIM (Developer | Standard)"
+  description = "SKU de APIM. Acepta corto (Developer|Standard|Basic|Premium|Consumption) o completo (Developer_1|Standard_1|Basic_1|Premium_1|Consumption_0)."
   type        = string
   validation {
-    condition     = contains(["Developer", "Standard"], var.sku_name)
-    error_message = "Solo se permite Developer o Standard para DEV."
+    condition = contains([
+      "Developer", "Developer_1",
+      "Standard", "Standard_1",
+      "Basic", "Basic_1",
+      "Premium", "Premium_1",
+      "Consumption", "Consumption_0"
+    ], var.sku_name)
+    error_message = "Usa uno de: Developer(_1), Standard(_1), Basic(_1), Premium(_1), Consumption(_0)."
   }
 }
 

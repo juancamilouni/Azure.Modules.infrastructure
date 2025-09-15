@@ -1,0 +1,74 @@
+variable "subscription_id" {
+  description = "ID de la suscripción de Azure"
+  type        = string
+}
+
+variable "tenant_id" {
+  description = "ID del tenant de Azure"
+  type        = string
+}
+
+variable "apim_name" {
+  description = "Nombre de la instancia APIM (kebab-case)"
+  type        = string
+  validation {
+    condition     = can(regex("^[a-z0-9-]{3,64}$", var.apim_name))
+    error_message = "Usa kebab-case (a-z, 0-9, '-') entre 3 y 64 caracteres."
+  }
+}
+
+variable "location" {
+  description = "Región"
+  type        = string
+}
+
+variable "resource_group_name" {
+  description = "Nombre del Resource Group"
+  type        = string
+}
+
+variable "sku_name" {
+  description = "SKU de APIM (Developer | Standard)"
+  type        = string
+  validation {
+    condition     = contains(["Developer","Standard"], var.sku_name)
+    error_message = "Solo se permite Developer o Standard para DEV."
+  }
+}
+
+variable "publisher_name" {
+  description = "Nombre del publicador"
+  type        = string
+}
+
+variable "publisher_email" {
+  description = "Email del publicador"
+  type        = string
+  validation {
+    condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.publisher_email))
+    error_message = "Ingresa un email válido."
+  }
+}
+
+variable "custom_domain_enabled" {
+  description = "Habilitar dominio personalizado (Key Vault)"
+  type        = bool
+  default     = false
+}
+
+variable "custom_domain" {
+  description = "FQDN público para el proxy"
+  type        = string
+  default     = ""
+}
+
+variable "kv_certificate_secret_id" {
+  description = "Secret ID del certificado en Key Vault"
+  type        = string
+  default     = ""
+}
+
+variable "tags" {
+  description = "Etiquetas obligatorias"
+  type        = map(string)
+}

@@ -1,3 +1,6 @@
+##############################
+# Normalización de SKU       #
+##############################
 locals {
   sku_map = {
     "Developer"     = "Developer_1"
@@ -14,6 +17,9 @@ locals {
   sku_normalized = lookup(local.sku_map, var.sku_name, var.sku_name)
 }
 
+##############################
+# Instancia APIM             #
+##############################
 resource "azurerm_api_management" "this" {
   name                = var.apim_name
   location            = var.location
@@ -61,17 +67,15 @@ data "azurerm_api_management_product" "existing" {
   resource_group_name = var.resource_group_name
 }
 
-# ✅ Ternario en UNA sola línea
 locals {
   product_id_full = var.create_product ? azurerm_api_management_product.plan[0].id : data.azurerm_api_management_product.existing[0].id
 }
 
-
-# ✅ Normaliza user_id a Resource ID completo si te pasan "1"
+##############################
+# Suscripción (opcional)     #
+##############################
 locals {
-  subscription_user_id_full = startswith(var.subscription_user_id, "/subscriptions/")
-    ? var.subscription_user_id
-    : "${azurerm_api_management.this.id}/users/${var.subscription_user_id}"
+  subscription_user_id_full = startswith(var.subscription_user_id, "/subscriptions/") ? var.subscription_user_id : "${azurerm_api_management.this.id}/users/${var.subscription_user_id}"
 }
 
 resource "azurerm_api_management_subscription" "sub" {

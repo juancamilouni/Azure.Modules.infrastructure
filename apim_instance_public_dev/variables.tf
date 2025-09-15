@@ -28,11 +28,11 @@ variable "sku_name" {
   type        = string
   validation {
     condition = contains([
-      "Developer","Developer_1",
-      "Standard","Standard_1",
-      "Basic","Basic_1",
-      "Premium","Premium_1",
-      "Consumption","Consumption_0"
+      "Developer", "Developer_1",
+      "Standard", "Standard_1",
+      "Basic", "Basic_1",
+      "Premium", "Premium_1",
+      "Consumption", "Consumption_0"
     ], var.sku_name)
     error_message = "Usa uno de: Developer(_1), Standard(_1), Basic(_1), Premium(_1), Consumption(_0)."
   }

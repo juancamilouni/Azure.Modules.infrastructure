@@ -14,7 +14,6 @@ locals {
   sku_normalized = lookup(local.sku_map, var.sku_name, var.sku_name)
 }
 
-
 resource "azurerm_api_management" "this" {
   name                = var.apim_name
   location            = var.location
@@ -40,6 +39,9 @@ resource "azurerm_api_management" "this" {
   tags = var.tags
 }
 
+##############################
+# Product (crear o referenciar)
+##############################
 resource "azurerm_api_management_product" "plan" {
   count               = var.create_product ? 1 : 0
   product_id          = var.product_id
@@ -59,12 +61,13 @@ data "azurerm_api_management_product" "existing" {
   resource_group_name = var.resource_group_name
 }
 
+# ✅ Ternario en UNA sola línea
 locals {
-  product_id_full = var.create_product
-    ? azurerm_api_management_product.plan[0].id
-    : data.azurerm_api_management_product.existing[0].id
+  product_id_full = var.create_product ? azurerm_api_management_product.plan[0].id : data.azurerm_api_management_product.existing[0].id
 }
 
+
+# ✅ Normaliza user_id a Resource ID completo si te pasan "1"
 locals {
   subscription_user_id_full = startswith(var.subscription_user_id, "/subscriptions/")
     ? var.subscription_user_id

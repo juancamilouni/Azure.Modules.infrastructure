@@ -51,7 +51,6 @@ resource "azurerm_api_management_product" "plan" {
   published             = true
 }
 
-# Si no lo creamos, intentamos resolverlo por data source (mismo product_id)
 data "azurerm_api_management_product" "existing" {
   count               = var.create_product ? 0 : 1
   product_id          = var.product_id
@@ -59,11 +58,9 @@ data "azurerm_api_management_product" "existing" {
   resource_group_name = var.resource_group_name
 }
 
-# ID completo del product (creado o existente)
+# ✅ CORREGIDO: ternario en una sola línea
 locals {
-  product_id_full = var.create_product
-    ? azurerm_api_management_product.plan[0].id
-    : data.azurerm_api_management_product.existing[0].id
+  product_id_full = var.create_product ? azurerm_api_management_product.plan[0].id : data.azurerm_api_management_product.existing[0].id
 }
 
 resource "azurerm_api_management_subscription" "sub" {

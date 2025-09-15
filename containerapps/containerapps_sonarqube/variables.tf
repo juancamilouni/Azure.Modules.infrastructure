@@ -106,7 +106,7 @@ variable "secret_env_map" {
   default     = {}
 }
 
-# -------------------- Secretos --------------------
+
 variable "secrets" {
   description = "Secretos (inline o referenciados por Key Vault)"
   type = list(object({

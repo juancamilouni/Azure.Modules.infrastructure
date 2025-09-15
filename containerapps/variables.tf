@@ -142,7 +142,6 @@ variable "registry_password_value" {
   default     = null
 }
 
-# -------------------- Identidad --------------------
 variable "system_identity" {
   description = "Habilitar System Assigned Managed Identity"
   type        = bool

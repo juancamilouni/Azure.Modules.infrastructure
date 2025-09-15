@@ -138,3 +138,6 @@ variable "subscription_user_id" {
   type        = string
   default     = "1"
 }
+
+
+#deploy

@@ -14,7 +14,7 @@ variable "resource_group_name" {
   type        = string
 }
 
-# -------------------- App / Environment --------------------
+
 variable "name" {
   description = "Nombre de la Azure Container App (minúsculas, <=32, sin '--')"
   type        = string

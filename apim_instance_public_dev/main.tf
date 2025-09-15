@@ -38,3 +38,42 @@ resource "azurerm_api_management" "this" {
 
   tags = var.tags
 }
+
+resource "azurerm_api_management_product" "plan" {
+  count               = var.create_product ? 1 : 0
+  product_id          = var.product_id
+  api_management_name = azurerm_api_management.this.name
+  resource_group_name = var.resource_group_name
+
+  display_name          = var.product_display_name
+  subscription_required = var.product_subscription_required
+  approval_required     = var.product_approval_required
+  published             = true
+}
+
+# Si no lo creamos, intentamos resolverlo por data source (mismo product_id)
+data "azurerm_api_management_product" "existing" {
+  count               = var.create_product ? 0 : 1
+  product_id          = var.product_id
+  api_management_name = azurerm_api_management.this.name
+  resource_group_name = var.resource_group_name
+}
+
+# ID completo del product (creado o existente)
+locals {
+  product_id_full = var.create_product
+    ? azurerm_api_management_product.plan[0].id
+    : data.azurerm_api_management_product.existing[0].id
+}
+
+resource "azurerm_api_management_subscription" "sub" {
+  count               = var.create_subscription ? 1 : 0
+  api_management_name = azurerm_api_management.this.name
+  resource_group_name = var.resource_group_name
+
+  name         = var.subscription_name
+  display_name = var.subscription_display_name
+  product_id   = local.product_id_full
+  user_id      = var.subscription_user_id
+  state        = "active"
+}

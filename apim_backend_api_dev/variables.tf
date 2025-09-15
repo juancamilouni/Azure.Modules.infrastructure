@@ -1,3 +1,4 @@
+# Contexto provider
 variable "subscription_id" {
   description = "ID de la suscripción"
   type        = string
@@ -9,18 +10,18 @@ variable "tenant_id" {
 }
 
 variable "resource_group_name" {
-  description = "Resource Group"
+  description = "Resource Group de APIM"
   type        = string
 }
 
 variable "apim_name" {
-  description = "Nombre de APIM"
+  description = "Nombre de la instancia APIM destino"
   type        = string
 }
 
-# Backend (tu ACA o mock)
+# Backend (tu ACA o mock público en DEV)
 variable "backend_name" {
-  description = "Nombre backend en APIM (kebab-case)"
+  description = "Nombre del backend en APIM (kebab-case)"
   type        = string
   validation {
     condition     = can(regex("^[a-z0-9-]{3,64}$", var.backend_name))
@@ -29,11 +30,11 @@ variable "backend_name" {
 }
 
 variable "backend_url" {
-  description = "URL base backend (http/https)"
+  description = "URL base del backend (http/https), por ejemplo el FQDN del ACA"
   type        = string
   validation {
     condition     = can(regex("^https?://", var.backend_url))
-    error_message = "Debe iniciar con http:// o https://"
+    error_message = "backend_url debe iniciar con http:// o https://"
   }
 }
 
@@ -53,22 +54,22 @@ variable "api_display_name" {
 }
 
 variable "api_path" {
-  description = "Ruta pública base"
+  description = "Ruta pública base (sin dominio)"
   type        = string
   validation {
     condition     = can(regex("^[a-z0-9-_/]{1,128}$", var.api_path))
-    error_message = "Usa solo a-z, 0-9, '-', '_' y '/'."
+    error_message = "api_path: usa solo a-z, 0-9, '-', '_' y '/'."
   }
 }
 
 variable "openapi_spec_url" {
-  description = "URL OpenAPI (opcional)"
+  description = "URL del documento OpenAPI para import (opcional). Déjalo vacío para no importar."
   type        = string
   default     = ""
 }
 
 variable "api_subscription_required" {
-  description = "¿Requiere suscripción?"
+  description = "¿Requiere suscripción para acceder a la API?"
   type        = bool
   default     = true
 }
@@ -79,7 +80,7 @@ variable "product_id" {
   type        = string
   validation {
     condition     = can(regex("^[a-z0-9-]{3,64}$", var.product_id))
-    error_message = "Usa kebab-case (a-z, 0-9, '-') entre 3 y 64 caracteres."
+    error_message = "Product ID: usa kebab-case (a-z, 0-9, '-') entre 3 y 64 caracteres."
   }
 }
 
@@ -95,13 +96,7 @@ variable "product_subscription_required" {
 }
 
 variable "product_approval_required" {
-  description = "¿Aprobación manual?"
+  description = "¿Aprobación manual de suscripciones?"
   type        = bool
   default     = false
-}
-
-variable "tags" {
-  description = "Etiquetas obligatorias"
-  type        = map(string)
-  default     = {}
 }

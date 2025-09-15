@@ -1,12 +1,18 @@
+# Backend que apunta a tu Container App (público en DEV)
 resource "azurerm_api_management_backend" "this" {
   name                = var.backend_name
   resource_group_name = var.resource_group_name
   api_management_name = var.apim_name
-  protocol            = "http"
-  url                 = var.backend_url
-  # Si necesitas auth hacia el backend en dev, agrega credentials/tls via variables.
+
+  protocol = "http"
+  url      = var.backend_url
+
+  # Si tu backend requiere auth/tls ajusta estos bloques:
+  # credentials { header = { "x-api-key" = ["<token>"] } }
+  # tls { validate_certificate_chain = false, validate_certificate_name = false }
 }
 
+# API (opcionalmente importada desde OpenAPI por URL)
 resource "azurerm_api_management_api" "this" {
   name                = var.api_name
   resource_group_name = var.resource_group_name
@@ -26,10 +32,9 @@ resource "azurerm_api_management_api" "this" {
       content_value  = var.openapi_spec_url
     }
   }
-
-  tags = var.tags
 }
 
+# Product básico (plan) y enlace API↔Product
 resource "azurerm_api_management_product" "plan" {
   product_id          = var.product_id
   api_management_name = var.apim_name
@@ -39,8 +44,6 @@ resource "azurerm_api_management_product" "plan" {
   subscription_required = var.product_subscription_required
   approval_required     = var.product_approval_required
   published             = true
-
-  tags = var.tags
 }
 
 resource "azurerm_api_management_product_api" "attach" {
@@ -50,6 +53,7 @@ resource "azurerm_api_management_product_api" "attach" {
   resource_group_name = var.resource_group_name
 }
 
+# Política mínima: enruta la API al backend
 resource "azurerm_api_management_api_policy" "base" {
   api_name            = azurerm_api_management_api.this.name
   resource_group_name = var.resource_group_name

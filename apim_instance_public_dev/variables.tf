@@ -8,6 +8,7 @@ variable "tenant_id" {
   type        = string
 }
 
+
 variable "apim_name" {
   description = "Nombre de la instancia APIM (kebab-case)"
   type        = string
@@ -77,6 +78,63 @@ variable "kv_certificate_secret_id" {
 variable "tags" {
   description = "Etiquetas obligatorias"
   type        = map(string)
+  default     = {}
 }
 
-#deploy
+variable "create_product" {
+  description = "¿Crear un Product y publicarlo?"
+  type        = bool
+  default     = true
+}
+
+variable "product_id" {
+  description = "productId del Product (kebab-case) si create_product = true o para referenciar uno existente"
+  type        = string
+  default     = "plan-default"
+  validation {
+    condition     = can(regex("^[a-z0-9-]{3,64}$", var.product_id))
+    error_message = "product_id debe ser kebab-case (3..64)."
+  }
+}
+
+variable "product_display_name" {
+  description = "Nombre visible del Product"
+  type        = string
+  default     = "Default plan"
+}
+
+variable "product_subscription_required" {
+  description = "¿El Product requiere suscripción (subscription key)?"
+  type        = bool
+  default     = true
+}
+
+variable "product_approval_required" {
+  description = "¿Requiere aprobación manual de suscripciones?"
+  type        = bool
+  default     = false
+}
+
+variable "create_subscription" {
+  description = "¿Crear una suscripción asociada al Product?"
+  type        = bool
+  default     = true
+}
+
+variable "subscription_name" {
+  description = "Nombre único de la suscripción a crear"
+  type        = string
+  default     = "dev-subscription"
+}
+
+variable "subscription_display_name" {
+  description = "Nombre visible de la suscripción"
+  type        = string
+  default     = "Dev subscription"
+}
+
+variable "subscription_user_id" {
+  description = "User ID en APIM (p.ej. '1' = Administrators)"
+  type        = string
+  default     = "1"
+}

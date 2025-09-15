@@ -1,25 +1,19 @@
-# Backend que apunta a tu Container App (público en DEV)
 resource "azurerm_api_management_backend" "this" {
   name                = var.backend_name
   resource_group_name = var.resource_group_name
   api_management_name = var.apim_name
-
-  protocol = "http"
-  url      = var.backend_url
-
-  # Si tu backend requiere auth/tls ajusta estos bloques:
-  # credentials { header = { "x-api-key" = ["<token>"] } }
-  # tls { validate_certificate_chain = false, validate_certificate_name = false }
+  protocol            = "http"
+  url                 = var.backend_url
 }
 
-# API (opcionalmente importada desde OpenAPI por URL)
+
 resource "azurerm_api_management_api" "this" {
   name                = var.api_name
   resource_group_name = var.resource_group_name
   api_management_name = var.apim_name
 
   display_name          = var.api_display_name
-  path                  = var.api_path
+  path                  = var.api_path      # prefijo público
   protocols             = ["https"]
   api_type              = "http"
   revision              = "1"
@@ -34,8 +28,9 @@ resource "azurerm_api_management_api" "this" {
   }
 }
 
-# Product básico (plan) y enlace API↔Product
+
 resource "azurerm_api_management_product" "plan" {
+  count               = var.create_product ? 1 : 0
   product_id          = var.product_id
   api_management_name = var.apim_name
   resource_group_name = var.resource_group_name
@@ -47,14 +42,30 @@ resource "azurerm_api_management_product" "plan" {
 }
 
 resource "azurerm_api_management_product_api" "attach" {
+  count = var.create_product ? 1 : 0
   api_name            = azurerm_api_management_api.this.name
-  product_id          = azurerm_api_management_product.plan.product_id
+  product_id          = azurerm_api_management_product.plan[0].product_id
   api_management_name = var.apim_name
   resource_group_name = var.resource_group_name
 }
 
-# Política mínima: enruta la API al backend
-resource "azurerm_api_management_api_policy" "base" {
+resource "azurerm_api_management_subscription" "sub" {
+  count               = var.create_subscription ? 1 : 0
+  api_management_name = var.apim_name
+  resource_group_name = var.resource_group_name
+
+  display_name = var.subscription_name
+  product_id   = var.create_product ? azurerm_api_management_product.plan[0].id : null
+  user_id      = var.subscription_user_id
+  state        = "active"
+}
+
+
+locals {
+  api_path_regex = format("^/%s", replace(var.api_path, "/", "\\/"))
+}
+
+resource "azurerm_api_management_api_policy" "rewrite" {
   api_name            = azurerm_api_management_api.this.name
   resource_group_name = var.resource_group_name
   api_management_name = var.apim_name
@@ -63,17 +74,28 @@ resource "azurerm_api_management_api_policy" "base" {
 <policies>
   <inbound>
     <base />
+    ${var.enable_cors ? join("", [
+      "<cors>",
+        "<allowed-origins>",
+          join("", [for o in var.cors_allowed_origins : "<origin>", o, "</origin>"]),
+        "</allowed-origins>",
+        "<allowed-methods preflight-result-max-age=\"300\"><method>*</method></allowed-methods>",
+        "<allowed-headers><header>*</header></allowed-headers>",
+        "<expose-headers><header>*</header></expose-headers>",
+        "<allow-credentials>false</allow-credentials>",
+      "</cors>"
+    ]) : ""}
+
+    <!-- quita el prefijo público (var.api_path) -->
+    <rewrite-uri template="@(
+      Regex.Replace(context.Request.OriginalUrl.Path, '${local.api_path_regex}', '')
+    )" />
+
     <set-backend-service backend-id="${azurerm_api_management_backend.this.name}" />
   </inbound>
-  <backend>
-    <base />
-  </backend>
-  <outbound>
-    <base />
-  </outbound>
-  <on-error>
-    <base />
-  </on-error>
+  <backend><base /></backend>
+  <outbound><base /></outbound>
+  <on-error><base /></on-error>
 </policies>
 XML
 }

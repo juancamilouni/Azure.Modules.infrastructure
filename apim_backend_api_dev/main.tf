@@ -1,17 +1,18 @@
-########################################
-# Backend: APIM → tu Container App     #
-########################################
+# Backend que apunta a tu Container App (público en DEV)
 resource "azurerm_api_management_backend" "this" {
   name                = var.backend_name
   resource_group_name = var.resource_group_name
   api_management_name = var.apim_name
-  protocol            = "http"
-  url                 = var.backend_url
+
+  protocol = "http"
+  url      = var.backend_url
+
+  # Si tu backend requiere auth/tls ajusta estos bloques:
+  # credentials { header = { "x-api-key" = ["<token>"] } }
+  # tls { validate_certificate_chain = false, validate_certificate_name = false }
 }
 
-############################
-# API (base-path público)  #
-############################
+# API (opcionalmente importada desde OpenAPI por URL)
 resource "azurerm_api_management_api" "this" {
   name                = var.api_name
   resource_group_name = var.resource_group_name
@@ -33,46 +34,27 @@ resource "azurerm_api_management_api" "this" {
   }
 }
 
-#########################
-# Adjuntar al Product   #
-#########################
+# Product básico (plan) y enlace API↔Product
+resource "azurerm_api_management_product" "plan" {
+  product_id          = var.product_id
+  api_management_name = var.apim_name
+  resource_group_name = var.resource_group_name
+
+  display_name          = var.product_display_name
+  subscription_required = var.product_subscription_required
+  approval_required     = var.product_approval_required
+  published             = true
+}
+
 resource "azurerm_api_management_product_api" "attach" {
   api_name            = azurerm_api_management_api.this.name
-  product_id          = var.product_id
+  product_id          = azurerm_api_management_product.plan.product_id
   api_management_name = var.apim_name
   resource_group_name = var.resource_group_name
 }
 
-############################
-# Locals para CORS (XML)   #
-############################
-locals {
-  cors_origins_xml = join("", [for o in var.cors_allowed_origins : "<origin>${o}</origin>"])
-
-  # Construimos el bloque CORS por separado (HCL no permite heredoc dentro del ternario directamente)
-  cors_block_xml_value = <<EOT
-<cors>
-  <allowed-origins>
-    ${local.cors_origins_xml}
-  </allowed-origins>
-  <allowed-methods preflight-result-max-age="300"><method>*</method></allowed-methods>
-  <allowed-headers><header>*</header></allowed-headers>
-  <expose-headers><header>*</header></expose-headers>
-  <allow-credentials>false</allow-credentials>
-</cors>
-EOT
-
-  cors_block_xml = var.enable_cors ? local.cors_block_xml_value : ""
-}
-
-##########################################################
-# POLICY: reescritura para evitar 404                    #
-# Quita el base-path público antes de ir al backend.     #
-# Si el resultado queda vacío, usa "/".                  #
-##########################################################
-# NOTA: se usan &quot; dentro de atributos XML para que el validador de APIM
-# no rechace las expresiones @{ ... } con comillas.
-resource "azurerm_api_management_api_policy" "rewrite" {
+# Política mínima: enruta la API al backend
+resource "azurerm_api_management_api_policy" "base" {
   api_name            = azurerm_api_management_api.this.name
   resource_group_name = var.resource_group_name
   api_management_name = var.apim_name
@@ -81,41 +63,17 @@ resource "azurerm_api_management_api_policy" "rewrite" {
 <policies>
   <inbound>
     <base />
-    ${local.cors_block_xml}
-
-    <!-- Calcula el prefijo público de la API y el path completo solicitado -->
-    <set-variable name="prefix" value="@{ &quot;/&quot; + context.Api.Path.Trim('/') }" />
-    <set-variable name="full"   value="@{ context.Request.OriginalUrl.Path ?? &quot;/&quot; }" />
-
-    <!-- Quita el prefijo público (Api.Path) del path original -->
-    <set-variable name="cleanPath" value="@{
-      var pre  = (string)context.Variables[&quot;prefix&quot;];
-      var full = (string)context.Variables[&quot;full&quot;];
-
-      // API en raíz: no quitar nada
-      if (string.IsNullOrEmpty(pre) || pre == &quot;/&quot;)
-      {
-          return string.IsNullOrEmpty(full) ? &quot;/&quot; : full;
-      }
-
-      if (full.StartsWith(pre))
-      {
-          var trimmed = full.Substring(pre.Length);
-          if (string.IsNullOrEmpty(trimmed)) return &quot;/&quot;;
-          return trimmed.StartsWith(&quot;/&quot;) ? trimmed : &quot;/&quot; + trimmed;
-      }
-      return full;  // fallback si no hace match
-    }" />
-
-    <!-- Usa el path limpio, con fallback a "/" -->
-    <rewrite-uri template="@{ (string)context.Variables.GetValueOrDefault(&quot;cleanPath&quot;, &quot;/&quot;) }" />
-
-    <!-- Enruta al backend configurado -->
     <set-backend-service backend-id="${azurerm_api_management_backend.this.name}" />
   </inbound>
-  <backend><base /></backend>
-  <outbound><base /></outbound>
-  <on-error><base /></on-error>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
 </policies>
 XML
 }

@@ -49,7 +49,8 @@ resource "azurerm_api_management_product_api" "attach" {
 locals {
   cors_origins_xml = join("", [for o in var.cors_allowed_origins : "<origin>${o}</origin>"])
 
-  cors_block_xml = var.enable_cors ? <<EOT
+  # Construimos el bloque CORS por separado (HCL no permite heredoc dentro del ternario directamente)
+  cors_block_xml_value = <<EOT
 <cors>
   <allowed-origins>
     ${local.cors_origins_xml}
@@ -60,7 +61,8 @@ locals {
   <allow-credentials>false</allow-credentials>
 </cors>
 EOT
-  : ""
+
+  cors_block_xml = var.enable_cors ? local.cors_block_xml_value : ""
 }
 
 ##########################################################

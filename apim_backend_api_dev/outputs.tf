@@ -9,8 +9,8 @@ output "backend_id" {
 }
 
 output "product_id" {
-  description = "ID del product"
-  value       = azurerm_api_management_product.plan.product_id
+  description = "ID del product (creado o existente)"
+  value       = local.product_id_effective
 }
 
 output "wildcard_operations_ids" {

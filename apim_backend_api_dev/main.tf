@@ -4,13 +4,9 @@ resource "azurerm_api_management_backend" "this" {
   resource_group_name = var.resource_group_name
   api_management_name = var.apim_name
 
-  # El proveedor exige "http" (o soap). El esquema real lo determina 'url'.
+  # El proveedor usa "http" o "soap"; el esquema real lo toma de 'url'
   protocol = "http"
   url      = var.backend_url
-
-  # Si tu backend requiere auth/tls ajusta estos bloques:
-  # credentials { header = { "x-api-key" = ["<token>"] } }
-  # tls { validate_certificate_chain = false, validate_certificate_name = false }
 }
 
 # API (opcionalmente importada desde OpenAPI por URL)
@@ -35,8 +31,9 @@ resource "azurerm_api_management_api" "this" {
   }
 }
 
-# Product básico (plan) y enlace API↔Product
+# Product (opcional: solo si create_product = true)
 resource "azurerm_api_management_product" "plan" {
+  count               = var.create_product ? 1 : 0
   product_id          = var.product_id
   api_management_name = var.apim_name
   resource_group_name = var.resource_group_name
@@ -47,9 +44,15 @@ resource "azurerm_api_management_product" "plan" {
   published             = true
 }
 
+# Referencia efectiva del product (creado o existente)
+locals {
+  product_id_effective = var.create_product ? azurerm_api_management_product.plan[0].product_id : var.product_id
+}
+
+# Enlace API ↔ Product
 resource "azurerm_api_management_product_api" "attach" {
   api_name            = azurerm_api_management_api.this.name
-  product_id          = azurerm_api_management_product.plan.product_id
+  product_id          = local.product_id_effective
   api_management_name = var.apim_name
   resource_group_name = var.resource_group_name
 }
@@ -92,15 +95,9 @@ resource "azurerm_api_management_api_policy" "with_rewrite" {
     <rewrite-uri template="@(Regex.Replace(context.Request.OriginalUrl.Path, @"^/${var.api_path}", ""))" />
     <set-backend-service backend-id="${azurerm_api_management_backend.this.name}" />
   </inbound>
-  <backend>
-    <base />
-  </backend>
-  <outbound>
-    <base />
-  </outbound>
-  <on-error>
-    <base />
-  </on-error>
+  <backend><base /></backend>
+  <outbound><base /></outbound>
+  <on-error><base /></on-error>
 </policies>
 XML
 }
@@ -118,15 +115,9 @@ resource "azurerm_api_management_api_policy" "no_rewrite" {
     <base />
     <set-backend-service backend-id="${azurerm_api_management_backend.this.name}" />
   </inbound>
-  <backend>
-    <base />
-  </backend>
-  <outbound>
-    <base />
-  </outbound>
-  <on-error>
-    <base />
-  </on-error>
+  <backend><base /></backend>
+  <outbound><base /></outbound>
+  <on-error><base /></on-error>
 </policies>
 XML
 }

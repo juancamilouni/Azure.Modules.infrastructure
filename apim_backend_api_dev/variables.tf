@@ -63,7 +63,7 @@ variable "api_path" {
 }
 
 variable "openapi_spec_url" {
-  description = "URL del documento OpenAPI para import (opcional). Déjalo vacío para no importar."
+  description = "URL del documento OpenAPI (opcional). Déjalo vacío para no importar."
   type        = string
   default     = ""
 }
@@ -74,9 +74,15 @@ variable "api_subscription_required" {
   default     = true
 }
 
-# Product
+# Product (usaremos uno EXISTENTE por defecto)
+variable "create_product" {
+  description = "Crear el Product aquí (true) o usar uno existente (false)"
+  type        = bool
+  default     = false
+}
+
 variable "product_id" {
-  description = "ID del Product (kebab-case)"
+  description = "ID del Product (kebab-case). Si create_product=false, debe existir en APIM"
   type        = string
   validation {
     condition     = can(regex("^[a-z0-9-]{3,64}$", var.product_id))
@@ -85,18 +91,19 @@ variable "product_id" {
 }
 
 variable "product_display_name" {
-  description = "Nombre visible del Product"
+  description = "Nombre visible del Product (solo si create_product=true)"
   type        = string
+  default     = ""
 }
 
 variable "product_subscription_required" {
-  description = "¿Requiere suscripción al Product?"
+  description = "¿Requiere suscripción el Product? (solo si create_product=true)"
   type        = bool
   default     = true
 }
 
 variable "product_approval_required" {
-  description = "¿Aprobación manual de suscripciones?"
+  description = "¿Aprobación manual de suscripciones? (solo si create_product=true)"
   type        = bool
   default     = false
 }

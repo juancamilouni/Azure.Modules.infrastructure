@@ -1,3 +1,6 @@
+########################################
+# Backend: APIM → tu Container App     #
+########################################
 resource "azurerm_api_management_backend" "this" {
   name                = var.backend_name
   resource_group_name = var.resource_group_name
@@ -6,14 +9,16 @@ resource "azurerm_api_management_backend" "this" {
   url                 = var.backend_url
 }
 
-
+############################
+# API (base-path público)  #
+############################
 resource "azurerm_api_management_api" "this" {
   name                = var.api_name
   resource_group_name = var.resource_group_name
   api_management_name = var.apim_name
 
   display_name          = var.api_display_name
-  path                  = var.api_path      # prefijo público
+  path                  = var.api_path           # prefijo público (único en APIM)
   protocols             = ["https"]
   api_type              = "http"
   revision              = "1"
@@ -28,43 +33,22 @@ resource "azurerm_api_management_api" "this" {
   }
 }
 
-
-resource "azurerm_api_management_product" "plan" {
-  count               = var.create_product ? 1 : 0
+#########################
+# Adjuntar al Product   #
+#########################
+resource "azurerm_api_management_product_api" "attach" {
+  api_name            = azurerm_api_management_api.this.name
   product_id          = var.product_id
   api_management_name = var.apim_name
   resource_group_name = var.resource_group_name
-
-  display_name          = var.product_display_name
-  subscription_required = var.product_subscription_required
-  approval_required     = var.product_approval_required
-  published             = true
 }
 
-resource "azurerm_api_management_product_api" "attach" {
-  count = var.create_product ? 1 : 0
-  api_name            = azurerm_api_management_api.this.name
-  product_id          = azurerm_api_management_product.plan[0].product_id
-  api_management_name = var.apim_name
-  resource_group_name = var.resource_group_name
-}
-
-resource "azurerm_api_management_subscription" "sub" {
-  count               = var.create_subscription ? 1 : 0
-  api_management_name = var.apim_name
-  resource_group_name = var.resource_group_name
-
-  display_name = var.subscription_name
-  product_id   = var.create_product ? azurerm_api_management_product.plan[0].id : null
-  user_id      = var.subscription_user_id
-  state        = "active"
-}
-
-
-locals {
-  api_path_regex = format("^/%s", replace(var.api_path, "/", "\\/"))
-}
-
+##########################################################
+# POLICY: reescritura para evitar 404                    #
+# Quita el base-path público antes de ir al backend.     #
+# Si el resultado queda vacío, usa "/".                  #
+##########################################################
+# Nota: context.Api.Path = base-path público (ej. "/sonarqube")
 resource "azurerm_api_management_api_policy" "rewrite" {
   api_name            = azurerm_api_management_api.this.name
   resource_group_name = var.resource_group_name
@@ -86,11 +70,20 @@ resource "azurerm_api_management_api_policy" "rewrite" {
       "</cors>"
     ]) : ""}
 
-    <!-- quita el prefijo público (var.api_path) -->
-    <rewrite-uri template="@(
-      Regex.Replace(context.Request.OriginalUrl.Path, '${local.api_path_regex}', '')
-    )" />
+    <!-- Quita el prefijo público (Api.Path) del path original -->
+    <set-variable name="cleanPath" value="@{
+      var prefix = \"/\" + context.Api.Path.Trim('/');             // ej: '/sonarqube'
+      var full   = context.Request.OriginalUrl.Path ?? \"/\";
+      if (full.StartsWith(prefix))
+      {
+          var trimmed = full.Substring(prefix.Length);
+          if (string.IsNullOrEmpty(trimmed)) return \"/\";
+          return trimmed.StartsWith(\"/\") ? trimmed : \"/\" + trimmed;
+      }
+      return full;  // fallback si no hace match
+    }" />
 
+    <rewrite-uri template="@{ (string)context.Variables.GetValueOrDefault(\"cleanPath\", \"/\") }" />
     <set-backend-service backend-id="${azurerm_api_management_backend.this.name}" />
   </inbound>
   <backend><base /></backend>

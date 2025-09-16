@@ -1,15 +1,12 @@
-# Backend que apunta a tu Container App (público en DEV)
 resource "azurerm_api_management_backend" "this" {
   name                = var.backend_name
   resource_group_name = var.resource_group_name
   api_management_name = var.apim_name
 
-  # El proveedor usa "http" o "soap"; el esquema real lo toma de 'url'
   protocol = "http"
   url      = var.backend_url
 }
 
-# API (opcionalmente importada desde OpenAPI por URL)
 resource "azurerm_api_management_api" "this" {
   name                = var.api_name
   resource_group_name = var.resource_group_name
@@ -31,7 +28,7 @@ resource "azurerm_api_management_api" "this" {
   }
 }
 
-# Product (opcional: solo si create_product = true)
+
 resource "azurerm_api_management_product" "plan" {
   count               = var.create_product ? 1 : 0
   product_id          = var.product_id
@@ -44,12 +41,10 @@ resource "azurerm_api_management_product" "plan" {
   published             = true
 }
 
-# Referencia efectiva del product (creado o existente)
 locals {
   product_id_effective = var.create_product ? azurerm_api_management_product.plan[0].product_id : var.product_id
 }
 
-# Enlace API ↔ Product
 resource "azurerm_api_management_product_api" "attach" {
   api_name            = azurerm_api_management_api.this.name
   product_id          = local.product_id_effective
@@ -57,9 +52,7 @@ resource "azurerm_api_management_product_api" "attach" {
   resource_group_name = var.resource_group_name
 }
 
-# ---------------------------
-# Operaciones comodín (/*)
-# ---------------------------
+
 locals {
   wildcard_map = var.enable_wildcard_operations ? { for m in var.wildcard_methods : m => m } : {}
 }
@@ -76,11 +69,7 @@ resource "azurerm_api_management_api_operation" "wildcard" {
   url_template = "/*"
 }
 
-# ---------------------------
-# Políticas (con/sin rewrite)
-# ---------------------------
 
-# Con rewrite del prefijo api_path (por defecto ON)
 resource "azurerm_api_management_api_policy" "with_rewrite" {
   count               = var.enable_rewrite_uri ? 1 : 0
   api_name            = azurerm_api_management_api.this.name
@@ -91,7 +80,7 @@ resource "azurerm_api_management_api_policy" "with_rewrite" {
 <policies>
   <inbound>
     <base />
-    <!-- Elimina el prefijo /${var.api_path} del path antes de enviar al backend -->
+    <!-- 🔑 Reescribe eliminando el prefijo api_path para evitar 404 -->
     <rewrite-uri template="@(Regex.Replace(context.Request.OriginalUrl.Path, @"^/${var.api_path}", ""))" />
     <set-backend-service backend-id="${azurerm_api_management_backend.this.name}" />
   </inbound>
@@ -102,7 +91,6 @@ resource "azurerm_api_management_api_policy" "with_rewrite" {
 XML
 }
 
-# Sin rewrite (fallback si lo desactivas)
 resource "azurerm_api_management_api_policy" "no_rewrite" {
   count               = var.enable_rewrite_uri ? 0 : 1
   api_name            = azurerm_api_management_api.this.name

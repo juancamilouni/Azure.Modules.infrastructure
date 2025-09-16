@@ -58,11 +58,11 @@ variable "api_display_name" {
   type        = string
 }
 variable "api_path" {
-  description = "Base-path público único (ej: 'sonarqube' o 'api/ms1')"
+  description = "Base-path público único (ej: 'sonarqube', 'api/ms1'). Vacío para raíz."
   type        = string
   validation {
-    condition     = can(regex("^[a-z0-9-_/]{1,128}$", var.api_path))
-    error_message = "api_path permite a-z, 0-9, '-', '_' y '/'."
+    condition     = can(regex("^$|^[a-z0-9-_/]{1,128}$", var.api_path))
+    error_message = "api_path permite vacío (raíz) o a-z, 0-9, '-', '_' y '/'."
   }
 }
 

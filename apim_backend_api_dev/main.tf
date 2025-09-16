@@ -4,7 +4,7 @@ resource "azurerm_api_management_backend" "this" {
   resource_group_name = var.resource_group_name
   api_management_name = var.apim_name
 
-  # Usa "http" aunque backend_url sea https; APIM enruta por el esquema del URL
+  # El proveedor exige "http" (o soap). El esquema real lo determina 'url'.
   protocol = "http"
   url      = var.backend_url
 

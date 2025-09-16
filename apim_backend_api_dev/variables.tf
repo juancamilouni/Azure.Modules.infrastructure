@@ -111,7 +111,7 @@ variable "enable_wildcard_operations" {
 variable "wildcard_methods" {
   description = "Métodos HTTP para operaciones comodín"
   type        = list(string)
-  default     = ["GET","POST","PUT","DELETE","PATCH","OPTIONS","HEAD"]
+  default     = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"]
 }
 
 variable "enable_rewrite_uri" {

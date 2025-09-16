@@ -4,6 +4,7 @@ resource "azurerm_api_management_backend" "this" {
   resource_group_name = var.resource_group_name
   api_management_name = var.apim_name
 
+  # Usa "http" aunque backend_url sea https; APIM enruta por el esquema del URL
   protocol = "http"
   url      = var.backend_url
 
@@ -53,8 +54,60 @@ resource "azurerm_api_management_product_api" "attach" {
   resource_group_name = var.resource_group_name
 }
 
-# Política mínima: enruta la API al backend
-resource "azurerm_api_management_api_policy" "base" {
+# ---------------------------
+# Operaciones comodín (/*)
+# ---------------------------
+locals {
+  wildcard_map = var.enable_wildcard_operations ? { for m in var.wildcard_methods : m => m } : {}
+}
+
+resource "azurerm_api_management_api_operation" "wildcard" {
+  for_each            = local.wildcard_map
+  api_name            = azurerm_api_management_api.this.name
+  api_management_name = var.apim_name
+  resource_group_name = var.resource_group_name
+
+  operation_id = "passthrough-${lower(each.value)}"
+  display_name = "${each.value} passthrough"
+  method       = each.value
+  url_template = "/*"
+}
+
+# ---------------------------
+# Políticas (con/sin rewrite)
+# ---------------------------
+
+# Con rewrite del prefijo api_path (por defecto ON)
+resource "azurerm_api_management_api_policy" "with_rewrite" {
+  count               = var.enable_rewrite_uri ? 1 : 0
+  api_name            = azurerm_api_management_api.this.name
+  resource_group_name = var.resource_group_name
+  api_management_name = var.apim_name
+
+  xml_content = <<XML
+<policies>
+  <inbound>
+    <base />
+    <!-- Elimina el prefijo /${var.api_path} del path antes de enviar al backend -->
+    <rewrite-uri template="@(Regex.Replace(context.Request.OriginalUrl.Path, @"^/${var.api_path}", ""))" />
+    <set-backend-service backend-id="${azurerm_api_management_backend.this.name}" />
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>
+XML
+}
+
+# Sin rewrite (fallback si lo desactivas)
+resource "azurerm_api_management_api_policy" "no_rewrite" {
+  count               = var.enable_rewrite_uri ? 0 : 1
   api_name            = azurerm_api_management_api.this.name
   resource_group_name = var.resource_group_name
   api_management_name = var.apim_name

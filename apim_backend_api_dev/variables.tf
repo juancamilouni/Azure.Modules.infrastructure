@@ -54,7 +54,7 @@ variable "api_display_name" {
 }
 
 variable "api_path" {
-  description = "Ruta pública base (sin dominio)"
+  description = "Ruta pública base (sin dominio). Ej: api/precredit"
   type        = string
   validation {
     condition     = can(regex("^[a-z0-9-_/]{1,128}$", var.api_path))
@@ -99,4 +99,23 @@ variable "product_approval_required" {
   description = "¿Aprobación manual de suscripciones?"
   type        = bool
   default     = false
+}
+
+# Wildcard operations & rewrite (feature flags)
+variable "enable_wildcard_operations" {
+  description = "Crear operaciones comodín /* para métodos comunes"
+  type        = bool
+  default     = true
+}
+
+variable "wildcard_methods" {
+  description = "Métodos HTTP para operaciones comodín"
+  type        = list(string)
+  default     = ["GET","POST","PUT","DELETE","PATCH","OPTIONS","HEAD"]
+}
+
+variable "enable_rewrite_uri" {
+  description = "Reescribir el prefijo api_path antes de enviar al backend"
+  type        = bool
+  default     = true
 }

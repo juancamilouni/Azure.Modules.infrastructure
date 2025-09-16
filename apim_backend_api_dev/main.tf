@@ -70,6 +70,8 @@ EOT
 # Quita el base-path público antes de ir al backend.     #
 # Si el resultado queda vacío, usa "/".                  #
 ##########################################################
+# NOTA: se usan &quot; dentro de atributos XML para que el validador de APIM
+# no rechace las expresiones @{ ... } con comillas.
 resource "azurerm_api_management_api_policy" "rewrite" {
   api_name            = azurerm_api_management_api.this.name
   resource_group_name = var.resource_group_name
@@ -81,25 +83,34 @@ resource "azurerm_api_management_api_policy" "rewrite" {
     <base />
     ${local.cors_block_xml}
 
+    <!-- Calcula el prefijo público de la API y el path completo solicitado -->
+    <set-variable name="prefix" value="@{ &quot;/&quot; + context.Api.Path.Trim('/') }" />
+    <set-variable name="full"   value="@{ context.Request.OriginalUrl.Path ?? &quot;/&quot; }" />
+
     <!-- Quita el prefijo público (Api.Path) del path original -->
     <set-variable name="cleanPath" value="@{
-      var prefix = "/" + context.Api.Path.Trim('/');             // ej: '/sonarqube' o '/' si vacío
-      var full   = context.Request.OriginalUrl.Path ?? "/";
-      if (string.IsNullOrEmpty(prefix) || prefix == "/")
+      var pre  = (string)context.Variables[&quot;prefix&quot;];
+      var full = (string)context.Variables[&quot;full&quot;];
+
+      // API en raíz: no quitar nada
+      if (string.IsNullOrEmpty(pre) || pre == &quot;/&quot;)
       {
-          // API en raíz: no quitar nada
-          return string.IsNullOrEmpty(full) ? "/" : full;
+          return string.IsNullOrEmpty(full) ? &quot;/&quot; : full;
       }
-      if (full.StartsWith(prefix))
+
+      if (full.StartsWith(pre))
       {
-          var trimmed = full.Substring(prefix.Length);
-          if (string.IsNullOrEmpty(trimmed)) return "/";
-          return trimmed.StartsWith("/") ? trimmed : "/" + trimmed;
+          var trimmed = full.Substring(pre.Length);
+          if (string.IsNullOrEmpty(trimmed)) return &quot;/&quot;;
+          return trimmed.StartsWith(&quot;/&quot;) ? trimmed : &quot;/&quot; + trimmed;
       }
       return full;  // fallback si no hace match
     }" />
 
-    <rewrite-uri template="@{ (string)context.Variables.GetValueOrDefault("cleanPath", "/") }" />
+    <!-- Usa el path limpio, con fallback a "/" -->
+    <rewrite-uri template="@{ (string)context.Variables.GetValueOrDefault(&quot;cleanPath&quot;, &quot;/&quot;) }" />
+
+    <!-- Enruta al backend configurado -->
     <set-backend-service backend-id="${azurerm_api_management_backend.this.name}" />
   </inbound>
   <backend><base /></backend>

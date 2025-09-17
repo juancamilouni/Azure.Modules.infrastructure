@@ -31,7 +31,7 @@ variable "subnet_id" {
 variable "capacity" {
   description = "Capacidad (número de instancias del Application Gateway)"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "web_domain" {

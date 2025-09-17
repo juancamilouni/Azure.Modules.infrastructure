@@ -26,7 +26,7 @@ resource "azurerm_application_gateway" "this" {
   }
 
   autoscale_configuration {
-    min_capacity = 1
+    min_capacity = var.capacity
     max_capacity = 3
   }
 

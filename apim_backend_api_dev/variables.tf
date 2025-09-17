@@ -60,13 +60,15 @@ variable "api_display_name" {
 }
 
 variable "api_path" {
-  description = "Ruta base expuesta en APIM. Ej: api/precredit"
+  description = "Ruta base expuesta en APIM. Ej: api/precredit. Puede estar vacía para exponer en la raíz."
   type        = string
+
   validation {
-    condition     = can(regex("^[a-z0-9-_/]{1,128}$", var.api_path))
-    error_message = "api_path: usa solo a-z, 0-9, '-', '_' y '/'."
+    condition     = can(regex("^$|^[a-z0-9-_/]{1,128}$", var.api_path))
+    error_message = "api_path debe estar vacío o usar solo a-z, 0-9, '-', '_' y '/'."
   }
 }
+
 
 variable "openapi_spec_url" {
   description = "URL de la especificación OpenAPI (opcional)"

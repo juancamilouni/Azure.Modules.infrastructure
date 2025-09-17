@@ -94,6 +94,7 @@ resource "azurerm_application_gateway" "this" {
     http_listener_name         = "listener-web"
     backend_address_pool_name  = "backend-web"
     backend_http_settings_name = "http-settings"
+    priority                   = 100
   }
 
   request_routing_rule {
@@ -102,6 +103,7 @@ resource "azurerm_application_gateway" "this" {
     http_listener_name         = "listener-api"
     backend_address_pool_name  = "backend-api"
     backend_http_settings_name = "http-settings"
+    priority                   = 200
   }
 
   tags = var.tags

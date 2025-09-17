@@ -1,3 +1,13 @@
+variable "subscription_id" {
+  description = "ID de la suscripción de Azure"
+  type        = string
+}
+
+variable "tenant_id" {
+  description = "ID del Tenant de Azure"
+  type        = string
+}
+
 variable "name" {
   description = "Nombre del Application Gateway"
   type        = string
@@ -54,7 +64,7 @@ Ejemplo:
 }
 Si se deja null, se configura manualmente en el portal.
 EOT
-  type    = object({
+  type = object({
     data     = string
     password = string
   })

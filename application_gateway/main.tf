@@ -41,7 +41,7 @@ resource "azurerm_application_gateway" "this" {
   }
 
   frontend_port {
-    name = "https-port"
+    name = "http-port"
     port = 443
   }
 
@@ -56,17 +56,17 @@ resource "azurerm_application_gateway" "this" {
   http_listener {
     name                           = "listener-web"
     frontend_ip_configuration_name = "frontend-ip"
-    frontend_port_name             = "https-port"
+    frontend_port_name             = "http-port"
     host_name                      = var.web_domain
-    protocol                       = "Https"
+    protocol                       = "Http"
   }
 
   http_listener {
     name                           = "listener-api"
     frontend_ip_configuration_name = "frontend-ip"
-    frontend_port_name             = "https-port"
+    frontend_port_name             = "http-port"
     host_name                      = var.api_domain
-    protocol                       = "Https"
+    protocol                       = "Http"
   }
 
   ##########################################
@@ -98,7 +98,7 @@ resource "azurerm_application_gateway" "this" {
     name                  = "http-settings"
     cookie_based_affinity = "Disabled"
     port                  = 443
-    protocol              = "Https"
+    protocol              = "Http"
     request_timeout       = 60
   }
 

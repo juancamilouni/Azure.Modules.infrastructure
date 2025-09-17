@@ -40,45 +40,28 @@ resource "azurerm_application_gateway" "this" {
     port = 80
   }
 
-  frontend_port {
-    name = "http-port"
-    port = 443
-  }
-
   frontend_ip_configuration {
     name                 = "frontend-ip"
     public_ip_address_id = azurerm_public_ip.this.id
   }
 
   ##########################################
-  # Listeners
+  # Listeners (solo HTTP)
   ##########################################
   http_listener {
     name                           = "listener-web"
     frontend_ip_configuration_name = "frontend-ip"
     frontend_port_name             = "http-port"
-    host_name                      = var.web_domain
     protocol                       = "Http"
+    host_name                      = var.web_domain
   }
 
   http_listener {
     name                           = "listener-api"
     frontend_ip_configuration_name = "frontend-ip"
     frontend_port_name             = "http-port"
-    host_name                      = var.api_domain
     protocol                       = "Http"
-  }
-
-  ##########################################
-  # Certificado SSL (opcional)
-  ##########################################
-  dynamic "ssl_certificate" {
-    for_each = var.ssl_cert != null ? [1] : []
-    content {
-      name     = "ssl-cert"
-      data     = var.ssl_cert.data
-      password = var.ssl_cert.password
-    }
+    host_name                      = var.api_domain
   }
 
   ##########################################
@@ -97,7 +80,7 @@ resource "azurerm_application_gateway" "this" {
   backend_http_settings {
     name                  = "http-settings"
     cookie_based_affinity = "Disabled"
-    port                  = 443
+    port                  = 80
     protocol              = "Http"
     request_timeout       = 60
   }

@@ -1,10 +1,10 @@
 variable "subscription_id" {
-  description = "ID de la suscripción de Azure"
+  description = "ID de la suscripción"
   type        = string
 }
 
 variable "tenant_id" {
-  description = "ID del Tenant de Azure"
+  description = "ID del tenant"
   type        = string
 }
 
@@ -14,33 +14,33 @@ variable "name" {
 }
 
 variable "location" {
-  description = "Región de despliegue"
+  description = "Región de Azure"
   type        = string
 }
 
 variable "resource_group_name" {
-  description = "Nombre del grupo de recursos"
+  description = "Resource Group donde se desplegará el Application Gateway"
   type        = string
 }
 
 variable "subnet_id" {
-  description = "ID de la subred dedicada para Application Gateway"
+  description = "ID de la subred donde se desplegará el Application Gateway"
   type        = string
 }
 
 variable "capacity" {
-  description = "Número de instancias mínimas"
+  description = "Capacidad (número de instancias del Application Gateway)"
   type        = number
   default     = 2
 }
 
 variable "web_domain" {
-  description = "Dominio para Static WebApp (ej: www.midominio.com)"
+  description = "Dominio para la aplicación web (ej: www.miapp.com)"
   type        = string
 }
 
 variable "api_domain" {
-  description = "Dominio para API Management (ej: api.midominio.com)"
+  description = "Dominio para el API (ej: api.miapp.com)"
   type        = string
 }
 
@@ -55,15 +55,7 @@ variable "apim_fqdn" {
 }
 
 variable "ssl_cert" {
-  description = <<EOT
-Información del certificado SSL cargado manualmente.
-Ejemplo:
-{
-  data     = filebase64("certificado.pfx")
-  password = "tu_password"
-}
-Si se deja null, se configura manualmente en el portal.
-EOT
+  description = "Certificado SSL en formato { data, password }. Null si se gestiona manual."
   type = object({
     data     = string
     password = string
@@ -72,7 +64,6 @@ EOT
 }
 
 variable "tags" {
-  description = "Etiquetas comunes"
+  description = "Mapeo de tags obligatorios"
   type        = map(string)
-  default     = {}
 }

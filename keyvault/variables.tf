@@ -9,7 +9,7 @@ variable "tenant_id" {
 }
 
 variable "name" {
-  description = "Nombre del Key Vault (3-24 chars, solo letras y números)"
+  description = "Nombre del Key Vault (3-24 caracteres alfanuméricos y guiones)"
   type        = string
 
   validation {
@@ -19,7 +19,7 @@ variable "name" {
 }
 
 variable "location" {
-  description = "Región"
+  description = "Región donde se desplegará el Key Vault"
   type        = string
 }
 
@@ -80,6 +80,31 @@ variable "network_acls_vnet_subnet_ids" {
   description = "Lista de subnets (IDs) con acceso al KV"
   type        = list(string)
   default     = []
+}
+
+variable "certificate_name" {
+  description = "Nombre del certificado dentro del Key Vault"
+  type        = string
+  default     = "ssl-cert"
+}
+
+variable "certificate_pfx_path" {
+  description = "Ruta local al archivo .pfx del certificado (opcional)"
+  type        = string
+  default     = null
+}
+
+variable "certificate_password" {
+  description = "Password del archivo .pfx (opcional)"
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "application_gateway_identity_principal_id" {
+  description = "Object ID de la identidad administrada del Application Gateway"
+  type        = string
+  default     = null
 }
 
 variable "tags" {

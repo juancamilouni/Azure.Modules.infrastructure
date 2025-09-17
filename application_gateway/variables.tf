@@ -54,14 +54,6 @@ variable "apim_fqdn" {
   type        = string
 }
 
-variable "ssl_cert" {
-  description = "Certificado SSL en formato { data, password }. Null si se gestiona manual."
-  type = object({
-    data     = string
-    password = string
-  })
-  default = null
-}
 
 variable "tags" {
   description = "Mapeo de tags obligatorios"

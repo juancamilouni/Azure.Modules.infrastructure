@@ -1,7 +1,9 @@
 output "application_gateway_id" {
-  value = azurerm_application_gateway.agw.id
+  description = "ID del Application Gateway"
+  value       = azurerm_application_gateway.this.id
 }
 
-output "application_gateway_name" {
-  value = azurerm_application_gateway.agw.name
+output "application_gateway_public_ip" {
+  description = "Dirección IP pública del Application Gateway"
+  value       = azurerm_public_ip.this.ip_address
 }

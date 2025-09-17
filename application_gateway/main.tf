@@ -80,7 +80,7 @@ resource "azurerm_application_gateway" "this" {
   backend_http_settings {
     name                  = "http-settings"
     cookie_based_affinity = "Disabled"
-    port                  = 80
+    port                  = 5000
     protocol              = "Http"
     request_timeout       = 60
   }

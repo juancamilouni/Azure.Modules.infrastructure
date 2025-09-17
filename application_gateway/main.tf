@@ -59,7 +59,6 @@ resource "azurerm_application_gateway" "this" {
     frontend_port_name             = "https-port"
     host_name                      = var.web_domain
     protocol                       = "Https"
-    ssl_certificate_name           = var.ssl_cert != null ? "ssl-cert" : null
   }
 
   http_listener {
@@ -68,7 +67,6 @@ resource "azurerm_application_gateway" "this" {
     frontend_port_name             = "https-port"
     host_name                      = var.api_domain
     protocol                       = "Https"
-    ssl_certificate_name           = var.ssl_cert != null ? "ssl-cert" : null
   }
 
   ##########################################

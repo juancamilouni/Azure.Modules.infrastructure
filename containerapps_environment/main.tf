@@ -9,7 +9,7 @@ resource "azurerm_container_app_environment" "this" {
   # Red (si es null => Environment público)
   infrastructure_subnet_id       = var.infrastructure_subnet_id
   internal_load_balancer_enabled = var.internal_load_balancer_enabled
-  zone_redundancy_enabled      = var.zone_redundancy_enabled
+  zone_redundancy_enabled        = var.zone_redundancy_enabled
 
   tags = var.tags
 
@@ -17,10 +17,10 @@ resource "azurerm_container_app_environment" "this" {
   dynamic "workload_profile" {
     for_each = var.workload_profiles
     content {
-      name                = workload_profile.value.name
+      name                  = workload_profile.value.name
       workload_profile_type = "Dedicated"
-      minimum_count       = workload_profile.value.min_nodes
-      maximum_count       = workload_profile.value.max_nodes
+      minimum_count         = workload_profile.value.min_nodes
+      maximum_count         = workload_profile.value.max_nodes
     }
   }
 }

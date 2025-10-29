@@ -62,10 +62,3 @@ variable "workload_profiles" {
   }))
   default = []
 }
-
-# 🛑 NUEVO: Variable para configurar el Request Idle Timeout
-variable "request_idle_timeout_minutes" {
-  description = "Tiempo de espera inactivo (Idle Timeout) para el Ingress Premium (en minutos)."
-  type        = number
-  default     = 4 # Default de Azure, usaremos 8 en Terragrunt
-}

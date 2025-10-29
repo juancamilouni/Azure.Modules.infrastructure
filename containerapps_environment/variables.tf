@@ -51,4 +51,21 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+# 🛑 NUEVO: Variable para Workload Profiles (Requisito para Premium Ingress)
+variable "workload_profiles" {
+  description = "Lista de Workload Profiles para el Environment (ej. Dedicated-D4)."
+  type = list(object({
+    name = string
+    min_nodes = number
+    max_nodes = number
+    # Aquí podríamos agregar más configuraciones si fuera necesario
+  }))
+  default = []
+}
 
+# 🛑 NUEVO: Variable para configurar el Request Idle Timeout
+variable "request_idle_timeout_minutes" {
+  description = "Tiempo de espera inactivo (Idle Timeout) para el Ingress Premium (en minutos)."
+  type = number
+  default = 4 # Default de Azure, usaremos 8 en Terragrunt
+}

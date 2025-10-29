@@ -7,30 +7,29 @@ resource "azurerm_container_app_environment" "this" {
   # log_analytics_workspace_id = ...
 
   # Red (si es null => Environment público)
-  infrastructure_subnet_id       = var.infrastructure_subnet_id
+  infrastructure_subnet_id     = var.infrastructure_subnet_id
   internal_load_balancer_enabled = var.internal_load_balancer_enabled
-  zone_redundancy_enabled        = var.zone_redundancy_enabled
+  zone_redundancy_enabled      = var.zone_redundancy_enabled
 
   tags = var.tags
 
-  # 🛑 NUEVO: Bloque Workload Profiles
+  # 🛑 CORRECCIÓN CLAVE: Bloque Workload Profiles
+  # Este bloque activa el modo Premium Ingress en el entorno.
   dynamic "workload_profile" {
     for_each = var.workload_profiles
     content {
-      name                  = workload_profile.value.name
-      workload_profile_type = "Dedicated"
-      minimum_count         = workload_profile.value.min_nodes
-      maximum_count         = workload_profile.value.max_nodes
+      name                = workload_profile.value.name
+      # CORRECCIÓN: Se usa el SKU específico del nodo ("D4") en lugar del genérico "Dedicated".
+      workload_profile_type = "D4" 
+      minimum_count       = workload_profile.value.min_nodes
+      maximum_count       = workload_profile.value.max_nodes
     }
   }
 }
 
-# 🛑 NUEVO: Recurso auxiliar para configurar el Ingress Premium
-# NOTA: En la versión 3.x del provider azurerm, el timeout debe ser configurado a través de 'azurerm_container_app_environment_workload_profile' o 'azurerm_container_app_environment_workload_profile_scale', o usando un 'local-exec' para la CLI si no hay un recurso directo para el timeout. 
-# Usaremos un recurso auxiliar si existe o la sintaxis de 'azurerm_resource_group_deployment' si el recurso no existe. Por simplicidad, se recomienda usar el recurso 'azurerm_resource_group_deployment' con una plantilla ARM o la CLI como último recurso.
-
-# Para simplificar, le indico cómo se haría si existiera la propiedad directa (aunque es más complejo en la práctica)
-# Si no puede usar un recurso directo, DEBE usar un local-exec con la CLI de Azure para configurar el timeout.
+# NOTA: El siguiente bloque 'null_resource' con el 'local-exec' no es necesario
+# para activar la funcionalidad Premium, solo para automatizar el timeout.
+# Lo mantengo comentado aquí.
 /*
 resource "null_resource" "configure_premium_ingress_timeout" {
   triggers = {

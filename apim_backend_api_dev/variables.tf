@@ -138,3 +138,5 @@ variable "enable_rewrite_uri" {
   type        = bool
   default     = true
 }
+
+#deploy

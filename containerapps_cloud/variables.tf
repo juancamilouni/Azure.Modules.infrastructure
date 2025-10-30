@@ -153,3 +153,5 @@ variable "user_assigned_identity_ids" {
   type        = list(string)
   default     = []
 }
+
+#deploy

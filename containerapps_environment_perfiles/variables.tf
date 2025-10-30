@@ -51,4 +51,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
-
+# 🛑 NUEVO: Variable para Workload Profiles (Requisito para Premium Ingress)
+variable "workload_profiles" {
+  description = "Lista de Workload Profiles para el Environment (ej. Dedicated-D4)."
+  type = list(object({
+    name      = string
+    min_nodes = number
+    max_nodes = number
+    # Aquí podríamos agregar más configuraciones si fuera necesario
+  }))
+  default = []
+}
+#deploy

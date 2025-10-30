@@ -139,4 +139,3 @@ variable "enable_rewrite_uri" {
   default     = true
 }
 
-#deployconfig

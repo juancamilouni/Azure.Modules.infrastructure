@@ -24,4 +24,3 @@ variable "tags" {
   default     = {}
 }
 
-#deploy

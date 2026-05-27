@@ -17,3 +17,7 @@ output "wildcard_operations_ids" {
   description = "Lista de operaciones comodín creadas"
   value       = [for o in azurerm_api_management_api_operation.wildcard : o.operation_id]
 }
+output "apim_name" {
+  description = "Nombre del API Management"
+  value       = var.apim_name
+}

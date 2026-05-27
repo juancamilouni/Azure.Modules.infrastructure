@@ -2,12 +2,16 @@
 # Public IP (creada automáticamente)
 ##########################################
 resource "azurerm_public_ip" "this" {
+
   name                = "${var.name}-pip"
+
   location            = var.location
+
   resource_group_name = var.resource_group_name
 
   allocation_method = "Static"
-  sku               = "Standard"
+
+  sku = "Standard"
 
   tags = var.tags
 }
@@ -16,37 +20,63 @@ resource "azurerm_public_ip" "this" {
 # Application Gateway
 ##########################################
 resource "azurerm_application_gateway" "this" {
+
   name                = var.name
+
   location            = var.location
+
   resource_group_name = var.resource_group_name
 
+  ##########################################
+  # SKU
+  ##########################################
   sku {
     name = "Standard_v2"
     tier = "Standard_v2"
   }
 
+  ##########################################
+  # Autoscaling
+  ##########################################
   autoscale_configuration {
     min_capacity = var.capacity
     max_capacity = 3
   }
 
+  ##########################################
+  # TLS Policy moderna
+  ##########################################
+  ssl_policy {
+    policy_type = "Predefined"
+    policy_name = "AppGwSslPolicy20220101"
+  }
+
+  ##########################################
+  # Gateway IP Config
+  ##########################################
   gateway_ip_configuration {
     name      = "gateway-ip-config"
     subnet_id = var.subnet_id
   }
 
+  ##########################################
+  # Frontend Port
+  ##########################################
   frontend_port {
     name = "http-port"
     port = 80
   }
 
+  ##########################################
+  # Frontend IP
+  ##########################################
   frontend_ip_configuration {
     name                 = "frontend-ip"
     public_ip_address_id = azurerm_public_ip.this.id
   }
 
   ##########################################
-  # Listeners (solo HTTP)
+  # Listeners
   ##########################################
   http_listener {
     name                           = "listener-web"
@@ -65,7 +95,7 @@ resource "azurerm_application_gateway" "this" {
   }
 
   ##########################################
-  # Backends
+  # Backend Pools
   ##########################################
   backend_address_pool {
     name  = "backend-web"
@@ -77,6 +107,9 @@ resource "azurerm_application_gateway" "this" {
     fqdns = [var.apim_fqdn]
   }
 
+  ##########################################
+  # Backend Settings
+  ##########################################
   backend_http_settings {
     name                  = "http-settings"
     cookie_based_affinity = "Disabled"
@@ -86,7 +119,7 @@ resource "azurerm_application_gateway" "this" {
   }
 
   ##########################################
-  # Rules
+  # Routing Rules
   ##########################################
   request_routing_rule {
     name                       = "rule-web"
@@ -106,5 +139,8 @@ resource "azurerm_application_gateway" "this" {
     priority                   = 200
   }
 
+  ##########################################
+  # Tags
+  ##########################################
   tags = var.tags
 }
